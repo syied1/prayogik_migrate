@@ -1,7 +1,10 @@
 import React from "react";
 
-const Progress = () => {
-  return <div></div>;
+export const Progress = () => {
+  return (
+    <div>
+      <h1>testing progress</h1>
+    </div>
+  );
 };
 
-export default Progress;
