@@ -1,0 +1,374 @@
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id                     String   @id @default(auto()) @map("_id") @db.ObjectId
+  name                   String
+  email                  String   @unique
+  emailVerified          Boolean  @default(false)
+  emailVerificationToken String?
+  resetToken             String?
+  tokenUsed              Boolean?
+  password               String?
+  isAdmin                Boolean  @default(false)
+  isSuperAdmin           Boolean  @default(false)
+  role                   Role     @default(STUDENT)
+
+  teacherId       String? @db.ObjectId
+  teacher         User?   @relation("TeacherStudents", fields: [teacherId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  students        User[]  @relation("TeacherStudents")
+  teacherRevShare Float?
+
+  // One-to-many: Teacher can create many courses
+  createdCourses Course[] @relation("TeacherCourses")
+
+  // Many-to-many: Student can enroll in many courses
+  enrolledCourseIds String[] @db.ObjectId
+  enrolledCourses   Course[] @relation("StudentCourses", references: [id], fields: [enrolledCourseIds])
+
+  userProgress UserProgress[]
+  purchases    Purchase[]
+
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  TeacherRevenue TeacherRevenue[]
+  PaymentHistory PaymentHistory[]
+  Rating         Rating[]
+  Review         Review[]
+  Comment        Comment[]
+}
+
+model Course {
+  id          String  @id @default(auto()) @map("_id") @db.ObjectId
+  title       String
+  slug        String  @unique
+  description String?
+  imageUrl    String?
+
+  learningOutcomes String[] // What students will learn
+  requirements     String[] // Prerequisites or requirements
+  whoFor           String[] // Target audience
+
+  prices Price[] // Single course can have multiple price options (e.g., lifetime or different durations)
+
+  isPublished Boolean @default(false)
+
+  // Teacher relationship
+  teacherId       String @db.ObjectId
+  teacher         User   @relation("TeacherCourses", fields: [teacherId], references: [id])
+  teacherRevShare Float?
+
+  ownership CourseOwnership @default(TEACHER)
+
+  // Many-to-many: Course can be enrolled by many students
+  studentIds String[] @db.ObjectId
+  students   User[]   @relation("StudentCourses", references: [id], fields: [studentIds])
+
+  categoryId  String?      @db.ObjectId
+  category    Category?    @relation(fields: [categoryId], references: [id])
+  lessons     Lesson[]
+  attachments Attachment[]
+  purchases   Purchase[]
+
+  // Memberships related to the course
+
+  membershipPlanIds String[]         @db.ObjectId
+  membershipPlans   MembershipPlan[] @relation("CourseMemberships", references: [id], fields: [membershipPlanIds])
+
+  // Many-to-many: Course can be with bundles 
+  bundleIds String[] @db.ObjectId
+  bundles   Bundle[] @relation("BundleCourses", references: [id], fields: [bundleIds])
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  Rating    Rating[]
+  Review    Review[]
+  Comment   Comment[]
+  Chapter   Chapter[]
+
+  @@index([categoryId])
+}
+
+model Category {
+  id      String   @id @default(auto()) @map("_id") @db.ObjectId
+  name    String   @unique
+  slug    String   @unique
+  courses Course[]
+}
+
+model Attachment {
+  id   String @id @default(auto()) @map("_id") @db.ObjectId
+  name String
+  url  String
+
+  courseId String @db.ObjectId
+  course   Course @relation(fields: [courseId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([courseId])
+}
+
+model Lesson {
+  id          String               @id @default(auto()) @map("_id") @db.ObjectId
+  title       String
+  slug        String               @unique
+  description String?
+  videoUrl    String?
+  videoStatus videoUploadingStatus @default(processing)
+  position    Int
+  isPublished Boolean              @default(false)
+  isFree      Boolean              @default(false)
+
+  courseId String @db.ObjectId
+  course   Course @relation(fields: [courseId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  userProgress UserProgress[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([slug, courseId]) // Composite unique constraint
+  @@index([courseId])
+}
+
+model Comment {
+  id       String @id @default(auto()) @map("_id") @db.ObjectId
+  body     String
+  userId   String @db.ObjectId
+  user     User   @relation(fields: [userId], references: [id])
+  courseId String @db.ObjectId
+  course   Course @relation(fields: [courseId], references: [id])
+
+  // Self-referencing relationship for replies
+  parentId String?  @db.ObjectId // The parent comment (if this is a reply)
+  parent   Comment? @relation("CommentReplies", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction) // The parent comment relationship
+
+  replies Comment[] @relation("CommentReplies") // Replies to this comment (many replies)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Rating {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  value     Int      // Rating value ranging from 1 to 5
+  courseId  String   @db.ObjectId
+  course    Course   @relation(fields: [courseId], references: [id]) // Rating is for a course
+  userId    String   @db.ObjectId
+  user      User     @relation(fields: [userId], references: [id]) // Rating is by a user
+  createdAt DateTime @default(now()) // Automatically set to the current timestamp when a record is created
+
+  @@unique([courseId, userId]) // Ensures a user can rate a course only once
+}
+
+
+model Review {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  content   String // Textual review
+  courseId  String   @db.ObjectId
+  course    Course   @relation(fields: [courseId], references: [id]) // Review is for a course
+  userId    String   @db.ObjectId
+  user      User     @relation(fields: [userId], references: [id]) // Review is by a user
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Chapter {
+  id          String               @id @default(auto()) @map("_id") @db.ObjectId
+  title       String
+  slug        String               @unique
+  description String?
+  videoUrl    String?
+  videoStatus videoUploadingStatus @default(processing)
+  position    Int
+  isPublished Boolean              @default(false)
+  isFree      Boolean              @default(false)
+
+  courseId String @db.ObjectId
+  course   Course @relation(fields: [courseId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  userProgress UserProgress[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([slug, courseId]) // Composite unique constraint
+  @@index([courseId])
+}
+
+model UserProgress {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  userId String @db.ObjectId
+  user   User   @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  chapterId String  @db.ObjectId
+  chapter   Chapter @relation(fields: [chapterId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  isCompleted Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  Lesson    Lesson?  @relation(fields: [lessonId], references: [id])
+  lessonId  String?  @db.ObjectId
+
+  @@unique([userId, chapterId])
+  @@index([chapterId])
+}
+
+model Bundle {
+  id          String  @id @default(auto()) @map("_id") @db.ObjectId
+  title       String
+  description String?
+  prices      Price[] // Reference to the Price model for different pricing options
+
+  // Many-to-many: Course can be with bundles 
+  courseIds String[] @db.ObjectId
+  courses   Course[] @relation("BundleCourses", references: [id], fields: [courseIds])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model MembershipPlan {
+  id          String  @id @default(auto()) @map("_id") @db.ObjectId
+  title       String
+  description String?
+  prices      Price[]
+  // Courses related to the membership plan
+
+  courseIds String[] @db.ObjectId
+  courses   Course[] @relation("CourseMemberships", references: [id], fields: [courseIds])
+
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  Purchase  Purchase[]
+}
+
+model Price {
+  id                String    @id @default(auto()) @map("_id") @db.ObjectId
+  regularAmount     Float // Regular price for the corresponding duration
+  discountedAmount  Float? // Optional discounted price
+  discountExpiresOn DateTime?
+  isLifeTime        Boolean   @default(false) // Indicates if it's a lifetime purchase
+  duration          Int? // Duration in months/years (only relevant if not lifetime)
+  frequency         Frequency // Enum for yearly or monthly frequency
+
+  // Relationships
+  membershipPlanId String?         @db.ObjectId
+  membershipPlan   MembershipPlan? @relation(fields: [membershipPlanId], references: [id])
+
+  bundleId String? @db.ObjectId
+  bundle   Bundle? @relation(fields: [bundleId], references: [id])
+
+  courseId String? @db.ObjectId
+  course   Course? @relation(fields: [courseId], references: [id], onDelete: Cascade) // Cascade delete
+}
+
+model Purchase {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  userId String @db.ObjectId
+  user   User   @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  // Optional fields to handle purchase types
+  courseId String? @db.ObjectId
+  course   Course? @relation(fields: [courseId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  membershipPlanId String?         @db.ObjectId
+  membershipPlan   MembershipPlan? @relation(fields: [membershipPlanId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  purchaseType     PurchaseType // Indicates the type of purchase (SINGLE_COURSE or MEMBERSHIP)
+  purchaseDuration Int? // // Used for Single purchase 
+  expiresAt        DateTime?
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+
+  aamarPayData   AamarPayData?
+  TeacherRevenue TeacherRevenue[]
+
+  // Unique constraint to ensure a user can purchase the same course or membership only once
+  @@unique([userId, courseId])
+  @@unique([userId, membershipPlanId])
+  @@index([userId]) // Index to optimize queries
+}
+
+model AamarPayData {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  purchaseId String   @unique @db.ObjectId
+  purchase   Purchase @relation(fields: [purchaseId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  pg_txnid          String
+  payment_type      String
+  amount            String
+  currency          String
+  amount_bdt        String
+  amount_currency   String
+  rec_amount        String
+  processing_ratio  String
+  processing_charge String
+  date_processed    DateTime
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model TeacherRevenue {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId       String   @db.ObjectId
+  user         User     @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  purchaseId   String   @db.ObjectId
+  purchase     Purchase @relation(fields: [purchaseId], references: [id])
+  amountEarned Float // The amount the teacher earned from this purchase
+  date         DateTime @default(now())
+}
+
+model PaymentHistory {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  date          DateTime @default(now()) // Date of the payment
+  userId        String   @db.ObjectId
+  user          User     @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  transactionId String? // Optional field for payment transaction reference
+  amount        Float // Amount paid in the transaction
+
+  unpaidBalance Float // Balance that remains unpaid after this transaction
+}
+
+
+
+
+enum Frequency {
+  MONTHLY
+  YEARLY
+  LIFETIME
+}
+
+// Enums
+enum Role {
+  TEACHER
+  STUDENT
+}
+
+enum videoUploadingStatus {
+  processing
+  ready
+}
+
+enum PurchaseType {
+  SINGLE_COURSE
+  MEMBERSHIP
+}
+
+enum CourseOwnership {
+  TEACHER
+  COMPANY
+}
+
