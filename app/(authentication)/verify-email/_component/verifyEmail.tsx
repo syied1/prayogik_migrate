@@ -11,9 +11,9 @@ const VerifyEmail = () => {
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
 
-  if (!router.isFallback) {
-    return <p>Something went wrong</p>;
-  }
+//   if (!router.isFallback) {
+//     return <p>Something went wrong</p>;
+//   }
 
   const [status, setStatus] = useState(null); // null (initial), true (success), false (failure)
   const [isVerifying, setIsVerifying] = useState(true);
