@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, Suspense } from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
 import { useSearchParams, useRouter } from "next/navigation";
@@ -87,22 +87,24 @@ const VerifyEmail = () => {
   }
 
   return (
-    <div className="text-center flex justify-center items-center py-16">
-      <div className="flex gap-2 items-center">
-        {status === true ? (
-          <CheckCircle2 className="h-5 w-5 text-green-600" />
-        ) : status === false ? (
-          <AlertCircle className="h-5 w-5 text-red-500" />
-        ) : null}
-        <span className="text-gray-800">
-          {status === true
-            ? "Email verified successfully!"
-            : status === false
-            ? "Email verification failed."
-            : "Please wait..."}
-        </span>
+    <Suspense fallback={<div>Loading...</div>}>
+      <div className="text-center flex justify-center items-center py-16">
+        <div className="flex gap-2 items-center">
+          {status === true ? (
+            <CheckCircle2 className="h-5 w-5 text-green-600" />
+          ) : status === false ? (
+            <AlertCircle className="h-5 w-5 text-red-500" />
+          ) : null}
+          <span className="text-gray-800">
+            {status === true
+              ? "Email verified successfully!"
+              : status === false
+              ? "Email verification failed."
+              : "Please wait..."}
+          </span>
+        </div>
       </div>
-    </div>
+    </Suspense>
   );
 };
 
