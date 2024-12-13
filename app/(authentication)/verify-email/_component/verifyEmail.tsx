@@ -15,6 +15,8 @@ const VerifyEmail = () => {
   const [status, setStatus] = useState<null | true | false>(null); // Specify the type
   const [isVerifying, setIsVerifying] = useState(true);
   const isVerifiedRef = useRef(false); // Prevent multiple verification calls
+//   console.log('output');
+  
 
   useEffect(() => {
     // Redirect if token is not available
