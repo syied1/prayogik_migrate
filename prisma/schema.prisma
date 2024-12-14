@@ -159,7 +159,7 @@ model Comment {
 
 model Rating {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  value     Int      // Rating value ranging from 1 to 5
+  value     Int // Rating value ranging from 1 to 5
   courseId  String   @db.ObjectId
   course    Course   @relation(fields: [courseId], references: [id]) // Rating is for a course
   userId    String   @db.ObjectId
@@ -168,7 +168,6 @@ model Rating {
 
   @@unique([courseId, userId]) // Ensures a user can rate a course only once
 }
-
 
 model Review {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
@@ -342,9 +341,6 @@ model PaymentHistory {
   unpaidBalance Float // Balance that remains unpaid after this transaction
 }
 
-
-
-
 enum Frequency {
   MONTHLY
   YEARLY
@@ -371,4 +367,3 @@ enum CourseOwnership {
   TEACHER
   COMPANY
 }
-
