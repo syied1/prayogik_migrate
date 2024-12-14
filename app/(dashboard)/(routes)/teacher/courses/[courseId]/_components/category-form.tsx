@@ -17,9 +17,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
-import { Combobox } from "@/components/ui/combobox";
-import { Loader } from "lucide-react"; // Import Loader
+import { Loader } from "lucide-react";
 
 interface CategoryFormProps {
   initialData: Course;
@@ -28,7 +26,7 @@ interface CategoryFormProps {
 }
 
 const formSchema = z.object({
-  categoryId: z.string().min(1),
+  categoryId: z.string().min(1, "Category is required"),
 });
 
 export const CategoryForm = ({
@@ -37,9 +35,8 @@ export const CategoryForm = ({
   options,
 }: CategoryFormProps) => {
   const [isEditing, setIsEditing] = useState(false);
-  const [loading, setLoading] = useState(false); // State for loading
-
-  const toggleEdit = () => setIsEditing((current) => !current);
+  const [loading, setLoading] = useState(false);
+  const [search, setSearch] = useState("");
   const router = useRouter();
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -49,51 +46,52 @@ export const CategoryForm = ({
     },
   });
 
-  const { isSubmitting, isValid } = form.formState;
-
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    setLoading(true); // Set loading to true
+    setLoading(true);
     try {
       await axios.patch(`/api/courses/${courseId}`, values);
       toast.success("Course updated");
-      toggleEdit();
+      setIsEditing(false);
       router.refresh();
     } catch {
       toast.error("Something went wrong");
     } finally {
-      setLoading(false); // Reset loading state
+      setLoading(false);
     }
   };
 
   const selectedOption = options.find(
     (option) => option.value === initialData.categoryId
   );
+  const filteredOptions = options.filter((option) =>
+    option.label.toLowerCase().includes(search.toLowerCase())
+  );
 
   return (
     <div className="mt-6 border bg-slate-100 rounded-md p-4">
       <div className="font-medium flex items-center justify-between">
-        Course category
-        <Button onClick={toggleEdit} variant="ghost">
+        <span>Course Category</span>
+        <Button onClick={() => setIsEditing((prev) => !prev)} variant="ghost">
           {isEditing ? (
-            <>Cancel</>
+            "Cancel"
           ) : (
             <>
-              <Pencil className="h-4 w-4 mr-2" />
-              Edit category
+              <Pencil className="h-4 w-4 mr-2" /> Edit Category
             </>
           )}
         </Button>
       </div>
+
       {!isEditing && (
         <p
-          className={cn(
-            "text-sm mt-2",
-            !initialData.categoryId && "text-slate-500 italic"
-          )}
+          className={`text-sm mt-2 ${
+            !initialData.categoryId ? "text-slate-500 italic" : ""
+          }`}
         >
           {selectedOption?.label || "No category"}
         </p>
       )}
+
       {isEditing && (
         <Form {...form}>
           <form
@@ -106,25 +104,47 @@ export const CategoryForm = ({
               render={({ field }) => (
                 <FormItem>
                   <FormControl>
-                    <Combobox
-                      options={options} // Spread `options` directly instead of using `{...options}`
-                      {...field}
+                    <input
+                      type="text"
+                      placeholder="Search category..."
+                      className="border rounded-md p-2 w-full"
+                      value={search}
+                      onChange={(e) => setSearch(e.target.value)}
                     />
+                    <select
+                      {...field}
+                      className="mt-2 border rounded-md w-full p-2"
+                      onBlur={field.onBlur}
+                      onChange={(e) => {
+                        field.onChange(e.target.value);
+                        setSearch("");
+                      }}
+                    >
+                      <option value="" disabled>
+                        Select a category
+                      </option>
+                      {filteredOptions.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
+
             <div className="flex items-center gap-x-2">
               <Button
-                disabled={!isValid || isSubmitting || loading} // Disable if loading
+                disabled={
+                  !form.formState.isValid ||
+                  form.formState.isSubmitting ||
+                  loading
+                }
                 type="submit"
               >
-                {loading ? (
-                  <Loader className="animate-spin h-4 w-4" /> // Circular progress indicator
-                ) : (
-                  "Save"
-                )}
+                {loading ? <Loader className="animate-spin h-4 w-4" /> : "Save"}
               </Button>
             </div>
           </form>

@@ -10,9 +10,10 @@ const CoursePage = ({ params }) => {
 
   return (
     <div className="container mx-auto p-5">
-      <h1 className="text-2xl font-bold mb-5">Manage Course: {folderName}</h1>
+      {/* added for testing folder wise upload on vdocipher  */}
+      {/* <h1 className="text-2xl font-bold mb-5">Manage Course: {folderName}</h1>
       <UploadVideo />
-      <CourseVideos folderName={folderName} />
+      <CourseVideos folderName={folderName} /> */}
     </div>
   );
 };

@@ -92,11 +92,11 @@ export const DescriptionForm = ({
         <div
           className={cn(
             "text-sm mt-2",
-            !initialData?.description && "text-slate-500 italic"
+            !initialData.description && "text-slate-500 italic"
           )}
         >
-          {!initialData?.description && "No description"}
-          {initialData?.description && (
+          {!initialData.description && "No description"}
+          {initialData.description && (
             <div>
               <p
                 className="text-sm mb-4 text-black text-justify"
