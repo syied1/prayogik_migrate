@@ -101,7 +101,8 @@ export default function SingleCourse({ course }) {
         {/* Show course progress and continue button only if authenticated and purchased */}
         {status === "authenticated" &&
         session?.user?.id &&
-        progress !== null ? (
+        progress !== null &&
+        !isNaN(progress) ? (
           <>
             <div className="mb-4">
               <CourseProgress

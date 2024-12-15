@@ -58,7 +58,11 @@ export default function Header() {
           {status === "authenticated" && session?.user?.id ? (
             <>
               <button
-                onClick={() => signOut({ callbackUrl: "/" })}
+                onClick={async () => {
+                  await signOut({ redirect: false }); // Prevent default redirection
+                  window.location.href = "/"; // Redirect to home
+                  window.location.reload(); // Reload the page
+                }}
                 className="text-xl font-semibold leading-6 text-slate hover:text-primary-600"
               >
                 লগআউট
@@ -136,7 +140,11 @@ export default function Header() {
                 {status === "authenticated" && session?.user?.id ? (
                   <>
                     <button
-                      onClick={() => signOut()}
+                      onClick={async () => {
+                        await signOut({ redirect: false }); // Prevent default redirection
+                        window.location.href = "/"; // Redirect to home
+                        window.location.reload(); // Reload the page
+                      }}
                       className="text-2xl font-semibold leading-6 text-slate hover:text-primary-600"
                     >
                       লগআউট
