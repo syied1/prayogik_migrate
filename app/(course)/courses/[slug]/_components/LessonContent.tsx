@@ -27,9 +27,7 @@ export const LessonContent = ({
       <div className=" bg-[#105650]">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-x-6 px-6 py-3 lg:px-8">
           <h1 className="text-xl font-semibold text-white">{course.title}</h1>
-          <h1 className="text-xl font-semibold text-white">
-            Video URL ID: {currentVideoUrl}
-          </h1>
+        
         </div>
       </div>
       {/* video */}

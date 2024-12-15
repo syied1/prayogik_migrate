@@ -14,7 +14,7 @@ import MoreCourses from "./_components/more-course";
 import { getServerUserSession } from "@/lib/getServerUserSession";
 import { getRelatedCourses } from "@/actions/get-related-courses";
 
-// check course access
+// Check course access
 const checkCourseAccess = async (courseSlug, userId) => {
   const url = `${process.env.NEXT_PUBLIC_BASE_URL}/api/courses/access`;
   try {
@@ -27,7 +27,6 @@ const checkCourseAccess = async (courseSlug, userId) => {
     });
 
     if (!response.ok) {
-      // Ensure you don't attempt to parse an empty body
       let errorMessage = "Access denied";
       try {
         const errorData = await response.json();
@@ -55,16 +54,21 @@ const checkCourseAccess = async (courseSlug, userId) => {
   }
 };
 
-// get course by slug
+// Get course by slug
 const getCourseBySlug = async (courseSlug, userId) => {
   const url = `${process.env.NEXT_PUBLIC_BASE_URL}/api/front/courses/course`;
   try {
+    const body = { courseSlug };
+    if (userId && !isNaN(userId)) {
+      body.userId = userId; // Only include userId if it's valid
+    }
+
     const response = await fetch(url, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ courseSlug, userId }),
+      body: JSON.stringify(body),
     });
 
     if (!response.ok) {
@@ -92,32 +96,41 @@ export default async function CoursePage({ params }) {
   const { userId } = await getServerUserSession();
   const { slug } = params;
 
-  // has course access
-  const hasCourseAccess = await checkCourseAccess(slug, userId);
-  const { access } = hasCourseAccess;
+  // Initialize access variable
+  let access = null;
 
-  // Fetch course data using the slug
+  // Check course access if userId is defined
+  if (userId && !isNaN(userId)) {
+    const hasCourseAccess = await checkCourseAccess(slug, userId);
+    access = hasCourseAccess.access;
+  }
+
+  // Fetch course data using the slug, possibly without userId
   const course = await getCourseBySlug(slug, userId);
 
-  // Fetch related courses by category
-  const relatedCourses = await getRelatedCourses({
-    userId,
-    categoryId: course.categoryId,
-    currentCourseId: course.id,
-  });
+  // Fetch related courses only if userId is valid
+  let relatedCourses = [];
+  if (userId && !isNaN(userId)) {
+    relatedCourses = await getRelatedCourses({
+      userId,
+      categoryId: course.categoryId,
+      currentCourseId: course.id,
+    });
+  }
 
   return (
     <div>
-      {/* slug hero */}
+      {/* Slug hero */}
       <Hero course={course} />
-      {/* slug content */}
+      {/* Slug content */}
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-x-6 p-6 lg:px-8">
         <div className="w-full flex flex-col-reverse lg:flex-row gap-4 lg:gap-8">
           <div className="flex-1">
             <main className="min-h-screen">
               <WhatYouLearn course={course} />
               <CourseDetails course={course} />
-              <CourseLesson course={course} access={access} />
+              {/* Render CourseLesson only if user has access */}
+              {access && <CourseLesson course={course} access={access} />}
               <Requirements course={course} />
               <CourseDescription course={course} />
               <RelatedCourse courses={relatedCourses} />
@@ -128,7 +141,7 @@ export default async function CoursePage({ params }) {
           </div>
           <div className="flex-initial w-full relative lg:w-96 z-10">
             <div className="w-full h-full lg:-mt-[360px]">
-              {/* call sidebar */}
+              {/* Call sidebar */}
               <div className="sticky bg-white top-4 shadow-lg">
                 <div className="border border-gray-200">
                   <Sidebar

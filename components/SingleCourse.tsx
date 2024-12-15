@@ -103,13 +103,13 @@ export default function SingleCourse({ course }) {
         session?.user?.id &&
         progress !== null ? (
           <>
-            {/* <div className="mb-4">
+            <div className="mb-4">
               <CourseProgress
                 variant={progress === 100 ? "success" : "default"}
                 size="sm"
                 value={progress}
               />
-            </div> */}
+            </div>
             <Link
               href={`/courses/${slug}/${lessons[0]?.slug}`}
               className="mt-4"
@@ -121,6 +121,7 @@ export default function SingleCourse({ course }) {
           </>
         ) : (
           <div>
+            <div className="flex items-center text-gray-500 mt-2 mb-4"></div>
             <Link href={`/courses/${slug}`}>
               <Button className="w-full h-12 bg-teal-500 text-white font-bold py-2 rounded flex items-center justify-center hover:bg-teal-500 hover:opacity-80">
                 <span className=" ml-2 text-lg">বিস্তারিত দেখুন</span>

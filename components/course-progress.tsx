@@ -1,7 +1,7 @@
 // @ts-nocheck
 
+import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
-import Progress from "./ui/progress";
 
 interface CourseProgressProps {
   value: number;
@@ -20,32 +20,21 @@ const sizeByVariant = {
 };
 
 export const CourseProgress = ({
-  value,
+  value = 0,
   variant,
   size,
 }: CourseProgressProps) => {
-  // Validate value
-  if (typeof value !== "number" || value < 0 || value > 100) {
-    throw new Error(
-      "Invalid progress value. It must be a number between 0 and 100."
-    );
-  }
-
-  const effectiveVariant = variant ?? "default";
-  const effectiveSize = size ?? "default";
-  const safeValue = Math.max(0, Math.min(100, value)); 
-
   return (
     <>
-      <Progress />
+      <Progress className="h-2" value={value} variant={variant} />
       <p
         className={cn(
           "font-medium mt-2 text-sky-700",
-          colorByVariant[effectiveVariant],
-          sizeByVariant[effectiveSize]
+          colorByVariant[variant || "default"],
+          sizeByVariant[size || "default"]
         )}
       >
-        {Math.round(safeValue)}% Complete
+        {Math.round(value)}% Complete
       </p>
     </>
   );

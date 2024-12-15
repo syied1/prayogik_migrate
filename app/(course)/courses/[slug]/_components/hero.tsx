@@ -20,21 +20,21 @@ export default function Hero({ course }) {
           {/* breadcrumb */}
           <div className="mb-6">
             <BreadCrumb
-              name={course.category.name}
-              title={course.title}
+              name={course?.category?.name}
+              title={course?.title}
               url={"/courses/category"}
             />
           </div>
 
           {/* title */}
-          <h1 className="text-3xl font-bold mb-6 text-white">{course.title}</h1>
+          <h1 className="text-3xl font-bold mb-6 text-white">{course?.title}</h1>
           {/* description */}
           <p
             className="text-lg mb-6 text-white"
             dangerouslySetInnerHTML={{
               __html:
-                course.description.slice(0, 140) +
-                (course.description.length > 140
+                course?.description?.slice(0, 140) +
+                (course?.description?.length > 140
                   ? "..."
                   : "No Description Found!"),
             }}
@@ -42,14 +42,14 @@ export default function Hero({ course }) {
           {/* ratings */}
           <div className="flex items-center mb-3">
          
-            <AverageRating courseId={course.id} />
+            <AverageRating courseId={course?.id} />
           </div>
 
           {/* created by */}
           <p className="mb-3 text-white text-sm">
             Created by -
             <a href="#" className="text-yellow-400 underline ml-2">
-              {course.teacher.name}
+              {course?.teacher?.name}
             </a>
           </p>
           <div className="flex items-center gap-2 text-sm text-gray-100">

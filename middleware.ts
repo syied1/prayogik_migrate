@@ -7,7 +7,7 @@ export default withAuth({
 });
 
 export const config = {
-  // matcher: ["/courses/[slug]:path*"], // Protect these routes
+  matcher: ["/courses/[slug]:path*"], // Protect these routes
   // matcher: ["/courses/[slug]/:path*"], // Protect deeper paths only
-  matcher: ["/courses/:path*"], // Protect deeper paths only
+  // matcher: ["/courses/:path*"], // Protect deeper paths only
 };

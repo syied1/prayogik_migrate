@@ -1,17 +1,16 @@
 // @ts-nocheck
+
 import { db } from "@/lib/db";
 import { NextResponse } from "next/server";
 
-// get single course by slug (both for logged in and logged out users)
+// Get single course by slug (both for logged in and logged out users)
 export async function POST(req: Request) {
   try {
-    // const {userId} = await getServerUserSession(req);
-
     // Parse the request body to get the courseSlug and userId
     const { courseSlug, userId } = await req.json();
 
     // Validate the presence of courseSlug
-    if (!courseSlug || !userId) {
+    if (!courseSlug) {
       return NextResponse.json({ error: "Invalid Request" }, { status: 400 });
     }
 
@@ -43,7 +42,6 @@ export async function POST(req: Request) {
     return NextResponse.json(course, { status: 200 });
   } catch (error) {
     console.error("Error fetching course details:", error);
-
     return NextResponse.json(
       { error: "An unexpected error occurred." },
       { status: 500 }

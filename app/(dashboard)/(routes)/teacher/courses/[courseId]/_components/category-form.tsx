@@ -4,22 +4,14 @@ import * as z from "zod";
 import axios from "axios";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { Pencil } from "lucide-react";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import { Course } from "@prisma/client";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormMessage,
-} from "@/components/ui/form";
+import { CategorySelectionModal } from "./CategorySelectionModal";
+import { Pencil, PlusCircle, ImageIcon, Loader } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { Combobox } from "@/components/ui/combobox";
-import { Loader } from "lucide-react"; // Import Loader
 
 interface CategoryFormProps {
   initialData: Course;
@@ -28,7 +20,7 @@ interface CategoryFormProps {
 }
 
 const formSchema = z.object({
-  categoryId: z.string().min(1),
+  categoryId: z.string().min(1, { message: "Category is required" }),
 });
 
 export const CategoryForm = ({
@@ -37,7 +29,11 @@ export const CategoryForm = ({
   options,
 }: CategoryFormProps) => {
   const [isEditing, setIsEditing] = useState(false);
-  const [loading, setLoading] = useState(false); // State for loading
+  const [loading, setLoading] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedCategoryId, setSelectedCategoryId] = useState(
+    initialData?.categoryId || ""
+  );
 
   const toggleEdit = () => setIsEditing((current) => !current);
   const router = useRouter();
@@ -52,22 +48,20 @@ export const CategoryForm = ({
   const { isSubmitting, isValid } = form.formState;
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    setLoading(true); // Set loading to true
+    setLoading(true);
     try {
-      await axios.patch(`/api/courses/${courseId}`, values);
+      await axios.patch(`/api/courses/${courseId}`, {
+        categoryId: values.categoryId,
+      });
       toast.success("Course updated");
       toggleEdit();
       router.refresh();
     } catch {
       toast.error("Something went wrong");
     } finally {
-      setLoading(false); // Reset loading state
+      setLoading(false);
     }
   };
-
-  const selectedOption = options.find(
-    (option) => option.value === initialData.categoryId
-  );
 
   return (
     <div className="mt-6 border bg-slate-100 rounded-md p-4">
@@ -84,52 +78,71 @@ export const CategoryForm = ({
           )}
         </Button>
       </div>
+
       {!isEditing && (
         <p
           className={cn(
             "text-sm mt-2",
-            !initialData.categoryId && "text-slate-500 italic"
+            !selectedCategoryId && "text-slate-500 italic"
           )}
         >
-          {selectedOption?.label || "No category"}
+          {selectedCategoryId
+            ? options.find((opt) => opt.value === selectedCategoryId)?.label
+            : "No category"}
         </p>
       )}
+
       {isEditing && (
-        <Form {...form}>
-          <form
-            onSubmit={form.handleSubmit(onSubmit)}
-            className="space-y-4 mt-4"
-          >
-            <FormField
-              control={form.control}
-              name="categoryId"
-              render={({ field }) => (
-                <FormItem>
-                  <FormControl>
-                    <Combobox
-                      options={options} // Spread `options` directly instead of using `{...options}`
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <div className="flex items-center gap-x-2">
-              <Button
-                disabled={!isValid || isSubmitting || loading} // Disable if loading
-                type="submit"
-              >
-                {loading ? (
-                  <Loader className="animate-spin h-4 w-4" /> // Circular progress indicator
-                ) : (
-                  "Save"
-                )}
-              </Button>
-            </div>
-          </form>
-        </Form>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 mt-4">
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setIsModalOpen(true)}
+              className="block w-full p-2 text-left bg-white border rounded-md shadow-md focus:outline-none hover:bg-gray-100 text-sm mt-2"
+            >
+              {selectedCategoryId
+                ? options.find((opt) => opt.value === selectedCategoryId)?.label
+                : "Select a category"}
+              <span className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                <svg
+                  className="h-4 w-4 text-gray-400"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M7 10l5 5 5-5H7z"
+                  />
+                </svg>
+              </span>
+            </button>
+          </div>
+
+          <div className="flex items-center gap-x-2">
+            <Button
+              disabled={!isValid || isSubmitting || loading}
+              type="submit"
+            >
+              {loading ? <Loader className="animate-spin h-4 w-4" /> : "Save"}
+            </Button>
+          </div>
+        </form>
       )}
+
+      <CategorySelectionModal
+        options={options}
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSelect={(value) => {
+          setSelectedCategoryId(value);
+          form.setValue("categoryId", value); // Update form state
+          form.trigger(); // Trigger validation
+        }}
+      />
     </div>
   );
 };

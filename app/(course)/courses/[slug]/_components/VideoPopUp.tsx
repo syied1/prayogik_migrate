@@ -73,11 +73,11 @@ export default function VideoPopUp({
       </div>
 
       {/* Other Video Content List */}
-      <div className="overflow-y-scroll h-72 [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-gray-100 [&::-webkit-scrollbar-thumb]:bg-gray-300 dark:[&::-webkit-scrollbar-track]:bg-neutral-700 dark:[&::-webkit-scrollbar-thumb]:bg-neutral-500">
+      {/* <div className="overflow-y-scroll h-72 [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-gray-100 [&::-webkit-scrollbar-thumb]:bg-gray-300 dark:[&::-webkit-scrollbar-track]:bg-neutral-700 dark:[&::-webkit-scrollbar-thumb]:bg-neutral-500">
         {Array.from({ length: 8 }).map((_, index) => (
           <MoreCourseList key={index} />
         ))}
-      </div>
+      </div> */}
     </DialogContent>
   );
 }
