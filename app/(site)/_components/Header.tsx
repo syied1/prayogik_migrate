@@ -58,7 +58,7 @@ export default function Header() {
           {status === "authenticated" && session?.user?.id ? (
             <>
               <button
-                onClick={() => signOut()}
+                onClick={() => signOut({ callbackUrl: "/" })}
                 className="text-xl font-semibold leading-6 text-slate hover:text-primary-600"
               >
                 লগআউট
