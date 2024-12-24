@@ -1,4 +1,4 @@
-import { Chapter, Course, UserProgress } from "@prisma/client";
+import { Lesson, Course, UserProgress } from "@prisma/client";
 import { redirect } from "next/navigation";
 
 import { db } from "@/lib/db";
@@ -9,7 +9,7 @@ import { getServerUserSession } from "@/lib/getServerUserSession";
 
 interface CourseSidebarProps {
   course: Course & {
-    chapters: (Chapter & {
+    chapters: (Lesson & {
       userProgress: UserProgress[] | null;
     })[];
   };
@@ -46,14 +46,14 @@ export const CourseSidebar = async ({
         )}
       </div>
       <div className="flex flex-col w-full">
-        {course.chapters.map((chapter) => (
+        {course.chapters.map((Lesson) => (
           <CourseSidebarItem
-            key={chapter.id}
-            id={chapter.id}
-            label={chapter.title}
-            isCompleted={!!chapter.userProgress?.[0]?.isCompleted}
+            key={Lesson.id}
+            id={Lesson.id}
+            label={Lesson.title}
+            isCompleted={!!Lesson.userProgress?.[0]?.isCompleted}
             courseId={course.id}
-            isLocked={!chapter.isFree && !purchase}
+            isLocked={!Lesson.isFree && !purchase}
           />
         ))}
       </div>
