@@ -34,7 +34,6 @@ export default async function CategoryPage({
     ...searchParams,
     userId,
   });
-console.log("courses", courses);
 
   return (
     <div className="max-w-7xl mx-auto p-6 lg:px-8">

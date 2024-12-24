@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormMessage,
@@ -20,6 +21,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { LessonsList } from "./lessons-list";
+import Link from "next/link";
 
 interface LessonsFormProps {
   initialData: Course & { lessons: Lesson[] };
@@ -27,16 +29,25 @@ interface LessonsFormProps {
 }
 
 const formSchema = z.object({
-  title: z.string().min(1),
+  title: z.string().min(1, "Title is required"),
+  slug: z
+    .string()
+    .min(1, "Slug is required")
+    .regex(/^[a-zA-Z0-9-]+$/, {
+      message: "Slug can only contain English letters, numbers, and hyphens",
+    }),
 });
 
 export const LessonsForm = ({ initialData, courseId }: LessonsFormProps) => {
   const [isCreating, setIsCreating] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
-  const [loading, setLoading] = useState(false); // State for loading during creation
+  const [loading, setLoading] = useState(false);
 
   const toggleCreating = () => {
     setIsCreating((current) => !current);
+    if (!isCreating) {
+      form.reset(); // Reset form values when toggling to create mode
+    }
   };
 
   const router = useRouter();
@@ -44,14 +55,15 @@ export const LessonsForm = ({ initialData, courseId }: LessonsFormProps) => {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      title: "",
+      title: "", // Ensure the input starts empty
+      slug: "", // Default value for slug
     },
   });
 
   const { isSubmitting, isValid } = form.formState;
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    setLoading(true); // Set loading to true when starting the creation
+    setLoading(true);
     try {
       await axios.post(`/api/courses/${courseId}/lessons`, values);
       toast.success("Lesson created");
@@ -61,7 +73,7 @@ export const LessonsForm = ({ initialData, courseId }: LessonsFormProps) => {
       console.log("error is:", error);
       toast.error("Something went wrong");
     } finally {
-      setLoading(false); // Reset loading state
+      setLoading(false);
     }
   };
 
@@ -117,7 +129,7 @@ export const LessonsForm = ({ initialData, courseId }: LessonsFormProps) => {
                 <FormItem>
                   <FormControl>
                     <Input
-                      disabled={isSubmitting || loading} // Disable if loading or submitting
+                      disabled={loading} // Disable if loading
                       placeholder="e.g. 'Introduction to the course'"
                       {...field}
                     />
@@ -126,16 +138,59 @@ export const LessonsForm = ({ initialData, courseId }: LessonsFormProps) => {
                 </FormItem>
               )}
             />
-            <Button
-              disabled={!isValid || isSubmitting || loading}
-              type="submit"
-            >
-              {loading ? (
-                <Loader className="animate-spin h-4 w-4" /> 
-              ) : (
-                "Create"
+            <FormField
+              control={form.control}
+              name="slug"
+              render={({ field }) => (
+                <FormItem>
+                  <FormControl>
+                    <Input
+                      disabled={loading} // Disable if loading
+                      placeholder="e.g. 'introduction-to-the-course'"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    <ul className="list-inside list-disc space-y-1">
+                      <li>
+                        <strong>Must be in English:</strong> Only English
+                        letters, numbers, and hyphens allowed. Example:{" "}
+                        <code>'advanced-web-dev'</code>
+                      </li>
+                      <li>
+                        <strong>Cannot contain spaces:</strong> Use hyphens (-)
+                        to separate words. Example:
+                        <code>'web-development-course'</code>
+                      </li>
+                    </ul>
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
               )}
-            </Button>
+            />
+            <div className="flex items-center gap-x-2">
+              <Link href="/">
+                <Button type="button" variant="outline">
+                  Cancel
+                </Button>
+              </Link>
+              <Button
+                type="submit"
+                disabled={!isValid || isSubmitting || loading}
+                className={cn(
+                  "relative",
+                  loading || !isValid || isSubmitting
+                    ? "bg-black opacity-50 cursor-not-allowed"
+                    : "bg-black cursor-pointer"
+                )}
+              >
+                {loading ? (
+                  <Loader className="animate-spin h-4 w-4" />
+                ) : (
+                  "Create"
+                )}
+              </Button>
+            </div>
           </form>
         </Form>
       )}
@@ -147,11 +202,13 @@ export const LessonsForm = ({ initialData, courseId }: LessonsFormProps) => {
           )}
         >
           {!initialData.lessons.length && "No chapters"}
-          <LessonsList
-            onEdit={onEdit}
-            onReorder={onReorder}
-            items={initialData.lessons || []}
-          />
+          <div className="max-h-[600px] overflow-auto">
+            <LessonsList
+              onEdit={onEdit}
+              onReorder={onReorder}
+              items={initialData.lessons || []}
+            />
+          </div>
         </div>
       )}
       {!isCreating && (

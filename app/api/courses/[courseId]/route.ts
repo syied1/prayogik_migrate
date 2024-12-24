@@ -1,5 +1,6 @@
 // @ts-nocheck
 
+import { getProgress } from "@/actions/get-progress";
 import { db } from "@/lib/db";
 import { getServerUserSession } from "@/lib/getServerUserSession";
 import { NextResponse } from "next/server";
@@ -304,5 +305,28 @@ export async function PATCH(
   } catch (error) {
     console.error("[COURSE_ID_UPDATE_ERROR]", error);
     return new NextResponse("Internal Error", { status: 500 });
+  }
+}
+
+export async function POST(
+  request: Request,
+  { params }: { params: { courseId: string } }
+) {
+  const { userId } = await request.json(); // Extract userId from request body
+  const { courseId } = params; // Extract courseId from route parameters
+
+  try {
+    // Fetch the progress using the getProgress function
+    const progressPercentage = await getProgress(userId, courseId);
+
+    // Return the progress percentage as a JSON response
+    return NextResponse.json({ progress: progressPercentage });
+  } catch (error) {
+    console.error(error);
+    // Return an error response
+    return NextResponse.json(
+      { error: "Error fetching progress" },
+      { status: 500 }
+    );
   }
 }

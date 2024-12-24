@@ -7,12 +7,43 @@ import { CheckCircle, Clock } from "lucide-react";
 import { redirect } from "next/navigation";
 import { InfoCard } from "./_components/info-card";
 
+
 export default async function Dashboard() {
   const { userId } = await getServerUserSession();
 
   if (!userId) {
     return redirect("/");
   }
+  // import { useSession } from "next-auth/react";
+  // const { data: session, status } = useSession();
+  // if (session?.user?.role !== "STUDENT") {
+  //   handleSwitchRole("STUDENT");
+  // }
+
+  // const handleSwitchRole = async (newRole) => {
+  //   setLoading(true);
+
+  //   try {
+  //     const response = await fetch("/api/role", {
+  //       method: "POST",
+  //       headers: {
+  //         "Content-Type": "application/json",
+  //       },
+  //       body: JSON.stringify({ role: newRole }),
+  //     });
+
+  //     if (!response.ok) {
+  //       throw new Error("Failed to switch role");
+  //     }
+
+  //     const data = await response.json();
+  //   } catch (error) {
+  //     console.error("Error switching role:", error);
+  //     alert("Failed to switch role. Please try again.");
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
 
   const { completedCourses, coursesInProgress } = await getDashboardCourses(
     userId

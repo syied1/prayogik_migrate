@@ -27,21 +27,21 @@ export default function Hero({ course }) {
           </div>
 
           {/* title */}
-          <h1 className="text-3xl font-bold mb-6 text-white">{course?.title}</h1>
+          <h1 className="text-3xl font-bold mb-6 text-white">
+            {course?.title}
+          </h1>
           {/* description */}
           <p
             className="text-lg mb-6 text-white"
             dangerouslySetInnerHTML={{
-              __html:
-                course?.description?.slice(0, 140) +
-                (course?.description?.length > 140
-                  ? "..."
-                  : "No Description Found!"),
+              __html: course?.description
+                ? course?.description?.slice(0, 140) +
+                  (course?.description?.length > 140 ? "..." : "")
+                : "No Description Found",
             }}
           />
           {/* ratings */}
           <div className="flex items-center mb-3">
-         
             <AverageRating courseId={course?.id} />
           </div>
 

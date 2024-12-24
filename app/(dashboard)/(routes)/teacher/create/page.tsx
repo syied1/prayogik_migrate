@@ -7,7 +7,6 @@ import { useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import toast from "react-hot-toast";
-
 import {
   Form,
   FormControl,
@@ -19,11 +18,19 @@ import {
 } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Loader } from "lucide-react";
 
+// Update the slug validation to require English letters, numbers, and hyphens
 const formSchema = z.object({
   title: z.string().min(1, {
     message: "Title is required",
   }),
+  slug: z
+    .string()
+    .min(1, { message: "Slug is required" })
+    .regex(/^[a-zA-Z0-9-]+$/, {
+      message: "Slug can only contain English letters, numbers, and hyphens",
+    }),
 });
 
 const CreatePage = () => {
@@ -32,6 +39,7 @@ const CreatePage = () => {
     resolver: zodResolver(formSchema),
     defaultValues: {
       title: "",
+      slug: "",
     },
   });
 
@@ -40,7 +48,6 @@ const CreatePage = () => {
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
       const response = await axios.post("/api/courses", values);
-      console.log("course creation response:", response);
       router.push(`/teacher/courses/${response.data.id}`);
       toast.success("Course created");
     } catch {
@@ -81,14 +88,57 @@ const CreatePage = () => {
                 </FormItem>
               )}
             />
+            <FormField
+              control={form.control}
+              name="slug"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Course slug</FormLabel>
+                  <FormControl>
+                    <Input
+                      disabled={isSubmitting}
+                      placeholder="e.g. 'advanced-web-dev'"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    <ul className="list-inside list-disc space-y-1">
+                      <li>
+                        <strong>Must be in English:</strong> Only English
+                        letters, numbers, and hyphens allowed. Example:{" "}
+                        <code>'advanced-web-dev'</code>
+                      </li>
+                      <li>
+                        <strong>Cannot contain spaces:</strong> Use hyphens (-)
+                        to separate words. Example:
+                        <code>'web-development-course'</code>
+                      </li>
+                    </ul>
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             <div className="flex items-center gap-x-2">
               <Link href="/">
-                <Button type="button" variant="ghost">
+                <Button type="button" variant="outline">
                   Cancel
                 </Button>
               </Link>
-              <Button type="submit" disabled={!isValid || isSubmitting}>
-                Continue
+              <Button
+                type="submit"
+                disabled={!isValid || isSubmitting}
+                className={`relative ${
+                  !isValid || isSubmitting
+                    ? "bg-green-700 opacity-50"
+                    : "bg-green-700"
+                }`}
+              >
+                {isSubmitting ? (
+                  <Loader className="animate-spin h-4 w-4" />
+                ) : (
+                  "Continue"
+                )}
               </Button>
             </div>
           </form>

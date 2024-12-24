@@ -5,7 +5,7 @@ import axios from "axios";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { Pencil } from "lucide-react";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import { Lesson } from "@prisma/client";
@@ -20,7 +20,8 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Preview } from "@/components/preview";
 import Tiptap from "@/components/ui/tiptap/tiptap";
-import { Loader } from "lucide-react"; 
+import { Loader } from "lucide-react";
+import JoditEditor from "jodit-react";
 
 interface LessonDescriptionFormProps {
   initialData: Lesson;
@@ -38,7 +39,12 @@ export const LessonDescriptionForm = ({
   lessonId,
 }: LessonDescriptionFormProps) => {
   const [isEditing, setIsEditing] = useState(false);
-  const [loading, setLoading] = useState(false); // State for loading
+  const [loading, setLoading] = useState(false);
+  const [textContent, setTextContent] = useState<string>(
+    initialData.textContent || ""
+  );
+
+  const editor = useRef(null);
 
   const toggleEdit = () => setIsEditing((current) => !current);
   const router = useRouter();
@@ -46,23 +52,33 @@ export const LessonDescriptionForm = ({
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      description: initialData?.description || "",
+      description: initialData?.textContent || "",
     },
   });
 
   const { isSubmitting, isValid } = form.formState;
 
-  const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    setLoading(true); // Set loading to true
-    try {
-      await axios.patch(`/api/courses/${courseId}/lessons/${lessonId}`, values);
-      toast.success("Lesson updated");
-      toggleEdit();
-      router.refresh();
-    } catch {
-      toast.error("Something went wrong");
-    } finally {
-      setLoading(false); // Reset loading state
+  const handleTextContentSubmit = async () => {
+    if (textContent) {
+      setLoading(true);
+      try {
+        const data = {
+          id: lessonId,
+          textContent,
+        };
+
+        await axios.put(
+          `/api/courses/${courseId}/lessons/${lessonId}/update`,
+          data
+        );
+        toast.success("TextContent updated successfully");
+        setLoading(false);
+        router.refresh();
+      } catch (error) {
+        console.error("Error updating TextContent:", error);
+        toast.error("Something went wrong");
+        setLoading(false);
+      }
     }
   };
 
@@ -85,53 +101,31 @@ export const LessonDescriptionForm = ({
         <div
           className={cn(
             "text-sm mt-2",
-            !initialData.description && "text-slate-500 italic"
+            !initialData.textContent && "text-slate-500 italic"
           )}
         >
-          {!initialData.description && "No description"}
-          {initialData.description && (
-            <Preview value={initialData?.description} />
+          {!initialData.textContent && "No description"}
+          {initialData.textContent && (
+            <Preview value={initialData.textContent} />
           )}
         </div>
       )}
+    
+
       {isEditing && (
-        <Form {...form}>
-          <form
-            onSubmit={form.handleSubmit(onSubmit)}
-            className="space-y-4 mt-4"
+        <div>
+          <JoditEditor
+            ref={editor}
+            value={textContent}
+            onChange={(value) => setTextContent(value)}
+          />
+          <Button
+            disabled={!textContent || isSubmitting || loading}
+            onClick={handleTextContentSubmit}
           >
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormControl>
-                    <Tiptap
-                      className="font-normal"
-                      description={`${
-                        initialData.description ? initialData.description : ""
-                      }`}
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <div className="flex items-center gap-x-2">
-              <Button
-                disabled={!isValid || isSubmitting || loading}
-                type="submit"
-              >
-                {loading ? (
-                  <Loader className="animate-spin h-4 w-4" /> 
-                ) : (
-                  "Save"
-                )}
-              </Button>
-            </div>
-          </form>
-        </Form>
+            {loading ? <Loader className="animate-spin h-4 w-4" /> : "Save"}
+          </Button>
+        </div>
       )}
     </div>
   );

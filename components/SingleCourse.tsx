@@ -32,10 +32,9 @@ export default function SingleCourse({ course }) {
   const isPurchased = purchases && purchases.length > 0;
   const isAuthenticated = !!session;
 
-  console.log(session);
-  console.log(status);
-  console.log(isPurchased);
-  console.log(isAuthenticated);
+  const decodedSlug = lessons[0]?.slug
+    ? decodeURIComponent(lessons[0].slug)
+    : "";
 
   return (
     <div className="bg-white rounded-lg shadow-lg overflow-hidden flex flex-col">
@@ -51,7 +50,12 @@ export default function SingleCourse({ course }) {
 
         {/* Video play icon */}
         <Link
-          href={`/courses/${slug}`} // Allow unauthenticated users to view the course details
+          //  href={`/courses/${slug}`} // Allow unauthenticated users to view the course details
+          href={
+            status === "authenticated" && session?.user?.id && progress !== null
+              ? `/courses/${slug}/${decodedSlug}`
+              : `/courses/${slug}`
+          } // Allow unauthenticated users to view the course details
           className="absolute inset-0 flex items-center justify-center mt-4"
         >
           <Image
@@ -80,7 +84,13 @@ export default function SingleCourse({ course }) {
         {/* Course Title */}
         <div className="mb-2 mt-4">
           <Link
-            href={`/courses/${slug}`} // Allow unauthenticated users to view the course details
+            href={
+              status === "authenticated" &&
+              session?.user?.id &&
+              progress !== null
+                ? `/courses/${slug}/${decodedSlug}`
+                : `/courses/${slug}`
+            }
             className="text-xl font-bold"
           >
             {title}
@@ -101,8 +111,7 @@ export default function SingleCourse({ course }) {
         {/* Show course progress and continue button only if authenticated and purchased */}
         {status === "authenticated" &&
         session?.user?.id &&
-        progress !== null &&
-        !isNaN(progress) ? (
+        progress !== null ? (
           <>
             <div className="mb-4">
               <CourseProgress
@@ -111,10 +120,7 @@ export default function SingleCourse({ course }) {
                 value={progress}
               />
             </div>
-            <Link
-              href={`/courses/${slug}/${lessons[0]?.slug}`}
-              className="mt-4"
-            >
+            <Link href={`/courses/${slug}/${decodedSlug}`} className="mt-4">
               <Button className="w-full h-12 text-lg bg-teal-500 text-white font-bold py-2 rounded flex items-center justify-center hover:bg-teal-500 hover:opacity-80">
                 চালিয়ে যান
               </Button>

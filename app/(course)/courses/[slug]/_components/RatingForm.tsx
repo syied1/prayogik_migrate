@@ -67,7 +67,6 @@ const RatingForm: React.FC<RatingFormProps> = ({ courseId, userId }) => {
         const errorData = await response.json();
         throw new Error(errorData.message || "Error submitting rating");
       }
-
       setSuccessMessage("Rating submitted successfully!");
     } catch (err: any) {
       setError(err.message || "Something went wrong!");
@@ -84,7 +83,7 @@ const RatingForm: React.FC<RatingFormProps> = ({ courseId, userId }) => {
   return (
     <form onSubmit={handleSubmit} className="mt-3">
       <h1 className="text-2xl font-bold mb-4">Rate this Course</h1>
-      <div className="flex flex-row items-center gap-5">
+      <div className="flex flex-col items-left gap-5">
         <div className="flex gap-3 cursor-pointer">
           {[1, 2, 3, 4, 5].map((value) => (
             <span
@@ -102,7 +101,7 @@ const RatingForm: React.FC<RatingFormProps> = ({ courseId, userId }) => {
         </div>
         <div>
           <div className="flex items-center gap-x-2">
-            <Button disabled={loading || ratingValue === 0} type="submit">
+            <Button className="bg-teal-700" disabled={loading || ratingValue === 0} type="submit">
               {loading ? (
                 <Loader className="animate-spin h-4 w-4" />
               ) : (

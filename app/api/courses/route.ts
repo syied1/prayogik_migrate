@@ -2,7 +2,7 @@
 
 import { db } from "@/lib/db";
 import { getServerUserSession } from "@/lib/getServerUserSession";
-import { slugify } from "@/lib/slugify";
+// import { slugify } from "@/lib/slugify";
 import { NextResponse } from "next/server";
 
 import { isTeacher } from "@/lib/teacher";
@@ -18,8 +18,9 @@ export async function POST(req: Request) {
     }
 
     // Parse the incoming request to get the title
-    const { title } = await req.json();
-    const slug = await slugify(title, db.course, "slug");
+    const { title , slug} = await req.json();
+    // const slug = await slugify(title, db.course, "slug");
+ 
 
     // Ensure the user is logged in and is a teacher
 

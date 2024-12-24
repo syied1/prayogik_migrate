@@ -6,6 +6,9 @@ import { VdocipherVideoPlayer } from "../chapters/[chapterId]/_components/vdocip
 import Sidebar from "../_components/sidebar";
 import CourseDescription from "../_components/course-description";
 import { LessonContent } from "../_components/LessonContent";
+import { getCourseBySlug } from "@/actions/get-course-by-slug";
+import { getRelatedCourses } from "@/actions/get-related-courses";
+import { redirect } from "next/navigation";
 
 // Get lesson
 const getLesson = async (lessonSlug, userId) => {
@@ -18,7 +21,7 @@ const getLesson = async (lessonSlug, userId) => {
     });
 
     // Log the data sent
-    console.log(JSON.stringify({ lessonSlug, userId }));
+    // console.log(JSON.stringify({ lessonSlug, userId }));
 
     return {
       error: false,
@@ -74,12 +77,28 @@ export default async function LessonPage({ params }) {
   const accessResponse = await checkCourseAccess(slug, userId);
   const hasCourseAccess = accessResponse.access;
 
-  if (!hasCourseAccess) {
-    return <div>Unauthorized access</div>;
-  }
+  if (!hasCourseAccess) redirect(`/courses/${slug}`);
+
+  // if (!hasCourseAccess) {
+  //   return <div>Unauthorized access</div>;
+  // }
 
   const isLocked = !lesson.isFree && !purchase;
   const completeOnEnd = !!purchase && !userProgress?.isCompleted;
+
+  // Fetch course data using the slug, possibly without userId
+  const currentCourse = await getCourseBySlug(slug, userId);
+
+  // Fetch related courses only if userId is valid
+  let relatedCourses = [];
+  // !isNaN(userId)
+  if (userId) {
+    relatedCourses = await getRelatedCourses({
+      userId,
+      categoryId: currentCourse.categoryId,
+      currentCourseId: currentCourse.id,
+    });
+  }
 
   return (
     <div>
@@ -90,6 +109,7 @@ export default async function LessonPage({ params }) {
         userProgress={userProgress}
         purchase={purchase}
         userId={userId}
+        relatedCourses={relatedCourses}
       />
     </div>
   );

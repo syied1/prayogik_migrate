@@ -5,18 +5,19 @@ import React, { forwardRef } from "react";
 import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import HardBreak from "@tiptap/extension-hard-break";
-import Toolbar from "./toolbar";
+import Toolbar from "@/components/ui/tiptap/toolbar";
+
 
 // Define the props interface
 interface TiptapProps {
-  description: string;
+  textContent: string;
   onChange: (html: string) => void;
   className?: string;
 }
 
 // Use `HTMLDivElement` type for the ref
-const Tiptap = forwardRef<HTMLDivElement, TiptapProps>(
-  ({ description, onChange, className }, ref) => {
+const TiptapTextContent = forwardRef<HTMLDivElement, TiptapProps>(
+  ({ textContent, onChange, className }, ref) => {
     const editor = useEditor({
       editorProps: {
         attributes: {
@@ -46,7 +47,7 @@ const Tiptap = forwardRef<HTMLDivElement, TiptapProps>(
           },
         }),
       ],
-      content: `<div>${description}</div>`, // Set the initial content with the provided value
+      content: `<div>${textContent}</div>`, // Set the initial content with the provided value
       onUpdate: ({ editor }) => {
         onChange(editor.getHTML()); // Call the onChange callback with the updated HTML content
       },
@@ -65,6 +66,6 @@ const Tiptap = forwardRef<HTMLDivElement, TiptapProps>(
   }
 );
 
-Tiptap.displayName = "Tiptap";
+TiptapTextContent.displayName = "Tiptap";
 
-export default Tiptap;
+export default TiptapTextContent;

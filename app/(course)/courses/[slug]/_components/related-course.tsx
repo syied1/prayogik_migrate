@@ -6,8 +6,8 @@ import Image from "next/image";
 import Link from "next/link";
 
 export default function RelatedCourse({ courses }) {
-  const rating = 4.5; // rating comes from database
-
+  // const rating = 4.5; // rating comes from database
+  console.log(courses.rating);
   return (
     <div className="my-12">
       <h1 className="text-2xl font-bold mb-6 text-gray-800">Related Courses</h1>
@@ -38,11 +38,16 @@ export default function RelatedCourse({ courses }) {
                     {new Date(item.updatedAt).toLocaleDateString()}
                   </p>
                   <div className="flex items-center mt-2 text-yellow-500 text-sm">
-                    {[...Array(Math.round(rating))].map((_, i) => (
+                    {/* {[...Array(Math.round(rating))].map((_, i) => (
                       <StarFilledIcon key={i} />
-                    ))}
+                    ))} */}
+                    {
+                      courses?.rating?.map((_, i) => (
+                        <StarFilledIcon key={i} />
+                      ))
+                    }
                     <span className="ml-2 text-gray-600">
-                      {rating.toFixed(1)}
+                      {courses?.rating?.toFixed(1)}
                     </span>
                   </div>
                 </div>

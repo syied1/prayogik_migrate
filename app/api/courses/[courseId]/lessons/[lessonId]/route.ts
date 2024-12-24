@@ -63,7 +63,7 @@ export async function GET(
   }
 }
 
-// Patch
+
 export async function PATCH(
   req: Request,
   { params }: { params: { courseId: string; lessonId: string } }
@@ -77,7 +77,7 @@ export async function PATCH(
     }
 
     // Parse the incoming request body to get the values (including videoUrl)
-    const { videoUrl, ...values } = await req.json();
+    const { videoUrl, textContent, ...values } = await req.json();
 
     // Ensure videoUrl is valid if provided
     if (videoUrl && typeof videoUrl !== "string") {
@@ -96,15 +96,27 @@ export async function PATCH(
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    // Update the chapter with the new values
+    // Fetch the existing lesson to preserve current values
+    const existingLesson = await db.lesson.findUnique({
+      where: {
+        id: params.lessonId,
+        courseId: params.courseId,
+      },
+    });
+
+    if (!existingLesson) {
+      return new NextResponse("Lesson not found", { status: 404 });
+    }
+
+ 
     const updatedLesson = await db.lesson.update({
       where: {
         id: params.lessonId,
-        courseId: params.courseId, // Ensure the chapter belongs to the correct course
+        courseId: params.courseId, // Ensure the lesson belongs to the correct course
       },
       data: {
         ...values,
-        videoUrl: videoUrl ?? undefined, // Use undefined if videoUrl is not provided
+        videoUrl: videoUrl ?? existingLesson.videoUrl,
       },
     });
 
@@ -114,6 +126,7 @@ export async function PATCH(
     return new NextResponse("Internal Server Error", { status: 500 });
   }
 }
+
 
 // Delete
 export async function DELETE(

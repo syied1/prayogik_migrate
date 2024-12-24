@@ -10,7 +10,7 @@ DELETE /api/course/:courseId/lesson/:lessonId – Delete a lesson.
  */
 import { db } from "@/lib/db";
 import { getServerUserSession } from "@/lib/getServerUserSession";
-import { compositeSlugify } from "@/lib/slugify";
+// import { compositeSlugify } from "@/lib/slugify";
 import { isTeacher } from "@/lib/teacher";
 import { NextResponse } from "next/server";
 
@@ -47,15 +47,16 @@ export async function POST(req, { params }) {
 
     const newPosition = lastLesson ? lastLesson.position + 1 : 1;
 
-    const { title } = await req.json();
+    const { title, slug } = await req.json();
+    // console.log(slug)
 
-    const slug = await compositeSlugify(
-      title,
-      db.lesson,
-      "slug",
-      "courseId",
-      params.courseId
-    );
+    // const slug = await compositeSlugify(
+    //   title,
+    //   db.lesson,
+    //   "slug",
+    //   "courseId",
+    //   params.courseId
+    // );
 
     // Create a new lesson
     const lesson = await db.lesson.create({
@@ -125,14 +126,14 @@ export async function PATCH(req, { params }) {
       throw new Error("Unauthorized Access");
     }
 
-    const { title } = await req.json();
-    const slug = await compositeSlugify(
-      title,
-      db.lesson,
-      "slug",
-      "courseId",
-      params.courseId
-    );
+    const { title , slug} = await req.json();
+    // const slug = await compositeSlugify(
+    //   title,
+    //   db.lesson,
+    //   "slug",
+    //   "courseId",
+    //   params.courseId
+    // );
 
     // Update the lesson
     const updatedLesson = await db.lesson.update({

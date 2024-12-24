@@ -45,11 +45,12 @@ model User {
 }
 
 model Course {
-  id          String  @id @default(auto()) @map("_id") @db.ObjectId
-  title       String
-  slug        String  @unique
-  description String?
-  imageUrl    String?
+  id            String  @id @default(auto()) @map("_id") @db.ObjectId
+  title         String
+  slug          String  @unique
+  description   String?
+  imageUrl      String?
+  totalDuration Int?
 
   learningOutcomes String[] // What students will learn
   requirements     String[] // Prerequisites or requirements
@@ -90,7 +91,6 @@ model Course {
   Rating    Rating[]
   Review    Review[]
   Comment   Comment[]
-  Chapter   Chapter[]
 
   @@index([categoryId])
 }
@@ -117,15 +117,21 @@ model Attachment {
 }
 
 model Lesson {
-  id          String               @id @default(auto()) @map("_id") @db.ObjectId
+  id          String  @id @default(auto()) @map("_id") @db.ObjectId
   title       String
-  slug        String               @unique
+  slug        String  @unique
   description String?
+
+  textContent String?
+
   videoUrl    String?
   videoStatus videoUploadingStatus @default(processing)
+
   position    Int
-  isPublished Boolean              @default(false)
-  isFree      Boolean              @default(false)
+  isPublished Boolean @default(false)
+  isFree      Boolean @default(false)
+
+  duration Int?
 
   courseId String @db.ObjectId
   course   Course @relation(fields: [courseId], references: [id], onDelete: NoAction, onUpdate: NoAction)
@@ -180,28 +186,28 @@ model Review {
   updatedAt DateTime @updatedAt
 }
 
-model Chapter {
-  id          String               @id @default(auto()) @map("_id") @db.ObjectId
-  title       String
-  slug        String               @unique
-  description String?
-  videoUrl    String?
-  videoStatus videoUploadingStatus @default(processing)
-  position    Int
-  isPublished Boolean              @default(false)
-  isFree      Boolean              @default(false)
+// model Chapter {
+//   id          String               @id @default(auto()) @map("_id") @db.ObjectId
+//   title       String
+//   slug        String               @unique
+//   description String?
+//   videoUrl    String?
+//   videoStatus videoUploadingStatus @default(processing)
+//   position    Int
+//   isPublished Boolean              @default(false)
+//   isFree      Boolean              @default(false)
 
-  courseId String @db.ObjectId
-  course   Course @relation(fields: [courseId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+//   courseId String @db.ObjectId
+//   course   Course @relation(fields: [courseId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
-  userProgress UserProgress[]
+//   userProgress UserProgress[]
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+//   createdAt DateTime @default(now())
+//   updatedAt DateTime @updatedAt
 
-  @@unique([slug, courseId]) // Composite unique constraint
-  @@index([courseId])
-}
+//   @@unique([slug, courseId]) // Composite unique constraint
+//   @@index([courseId])
+// }
 
 model UserProgress {
   id String @id @default(auto()) @map("_id") @db.ObjectId
@@ -209,18 +215,16 @@ model UserProgress {
   userId String @db.ObjectId
   user   User   @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
-  chapterId String  @db.ObjectId
-  chapter   Chapter @relation(fields: [chapterId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  lessonId String @db.ObjectId
+  lesson   Lesson @relation(fields: [lessonId], references: [id], onDelete: NoAction, onUpdate: NoAction) // Updated relation
 
   isCompleted Boolean @default(false)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  Lesson    Lesson?  @relation(fields: [lessonId], references: [id])
-  lessonId  String?  @db.ObjectId
 
-  @@unique([userId, chapterId])
-  @@index([chapterId])
+  @@unique([userId, lessonId]) // Update unique constraint
+  @@index([lessonId]) // Update indexing
 }
 
 model Bundle {
@@ -253,6 +257,7 @@ model MembershipPlan {
 
 model Price {
   id                String    @id @default(auto()) @map("_id") @db.ObjectId
+  isFree            Boolean   @default(false)
   regularAmount     Float // Regular price for the corresponding duration
   discountedAmount  Float? // Optional discounted price
   discountExpiresOn DateTime?

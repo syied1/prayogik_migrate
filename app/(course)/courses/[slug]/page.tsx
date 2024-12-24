@@ -13,6 +13,8 @@ import Review from "./_components/review";
 import MoreCourses from "./_components/more-course";
 import { getServerUserSession } from "@/lib/getServerUserSession";
 import { getRelatedCourses } from "@/actions/get-related-courses";
+import NotificationHandler from "@/components/notificationHandler/NotificationHandler";
+import { redirect } from "next/navigation";
 
 // Check course access
 const checkCourseAccess = async (courseSlug, userId) => {
@@ -96,21 +98,36 @@ export default async function CoursePage({ params }) {
   const { userId } = await getServerUserSession();
   const { slug } = params;
 
+  // TODO: redirect to 1st lesson
+
+  // Decode the first layer of encoding for bengali letter in url
+  const decodedSlug = decodeURIComponent(slug);
+
   // Initialize access variable
   let access = null;
 
   // Check course access if userId is defined
-  if (userId && !isNaN(userId)) {
-    const hasCourseAccess = await checkCourseAccess(slug, userId);
+  // if (userId && !isNaN(userId)) {
+  //   const hasCourseAccess = await checkCourseAccess(decodedSlug, userId);
+  //   console.log("hasCourseAccess:", hasCourseAccess);
+  //   access = hasCourseAccess.access;
+  // }
+  // TODO: handle properly
+  if (userId) {
+    const hasCourseAccess = await checkCourseAccess(decodedSlug, userId);
+    // console.log("hasCourseAccess:", hasCourseAccess);
     access = hasCourseAccess.access;
   }
 
   // Fetch course data using the slug, possibly without userId
-  const course = await getCourseBySlug(slug, userId);
+  const course = await getCourseBySlug(decodedSlug, userId);
+
+  if (access) redirect(`/courses/${slug}/${course?.lessons[0]?.slug}`);
 
   // Fetch related courses only if userId is valid
   let relatedCourses = [];
-  if (userId && !isNaN(userId)) {
+  // !isNaN(userId)
+  if (userId) {
     relatedCourses = await getRelatedCourses({
       userId,
       categoryId: course.categoryId,
@@ -122,21 +139,22 @@ export default async function CoursePage({ params }) {
     <div>
       {/* Slug hero */}
       <Hero course={course} />
+
       {/* Slug content */}
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-x-6 p-6 lg:px-8">
         <div className="w-full flex flex-col-reverse lg:flex-row gap-4 lg:gap-8">
           <div className="flex-1">
             <main className="min-h-screen">
+              <NotificationHandler />
               <WhatYouLearn course={course} />
               <CourseDetails course={course} />
-              {/* Render CourseLesson only if user has access */}
-              {access && <CourseLesson course={course} access={access} />}
+              <CourseLesson course={course} access={access} />
               <Requirements course={course} />
               <CourseDescription course={course} />
               <RelatedCourse courses={relatedCourses} />
-              <AuthorBio />
+              {/* <AuthorBio />
               <Review />
-              <MoreCourses />
+              <MoreCourses /> */}
             </main>
           </div>
           <div className="flex-initial w-full relative lg:w-96 z-10">

@@ -14,8 +14,8 @@ const navigation = [
   { name: "কোর্স ", href: "/courses/category" },
   { name: "আমদের সম্পর্কে", href: "/about" },
   { name: "টেস্টিমোনিয়াল", href: "/testimonial" },
-  { name: "যোগাযোগ", href: "/contact" },
-  { name: "ব্লগ", href: "/blog" },
+  // { name: "যোগাযোগ", href: "/contact" },
+  // { name: "ব্লগ", href: "/blog" },
 ];
 
 export default function Header() {
@@ -58,11 +58,7 @@ export default function Header() {
           {status === "authenticated" && session?.user?.id ? (
             <>
               <button
-                onClick={async () => {
-                  await signOut({ redirect: false }); // Prevent default redirection
-                  window.location.href = "/"; // Redirect to home
-                  window.location.reload(); // Reload the page
-                }}
+                onClick={() => signOut({ callbackUrl: "/" })}
                 className="text-xl font-semibold leading-6 text-slate hover:text-primary-600"
               >
                 লগআউট
@@ -140,11 +136,7 @@ export default function Header() {
                 {status === "authenticated" && session?.user?.id ? (
                   <>
                     <button
-                      onClick={async () => {
-                        await signOut({ redirect: false }); // Prevent default redirection
-                        window.location.href = "/"; // Redirect to home
-                        window.location.reload(); // Reload the page
-                      }}
+                      onClick={() => signOut()}
                       className="text-2xl font-semibold leading-6 text-slate hover:text-primary-600"
                     >
                       লগআউট

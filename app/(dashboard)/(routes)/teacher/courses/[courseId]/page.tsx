@@ -21,8 +21,9 @@ import { PriceForm } from "./_components/price-form";
 import { TitleForm } from "./_components/title-form";
 import { MultiplePriceForm } from "./_components/multiple-price-form";
 import { LessonsForm } from "./_components/lessons-form";
-import {LearningOutcomesForm} from "./_components/learningOutcome-form";
+import { LearningOutcomesForm } from "./_components/learningOutcome-form";
 import { CourseRequirementsForm } from "./_components/coureseRequirements-form";
+import { SlugTitleForm } from "./_components/slug-title-form";
 
 const CourseIdPage = async ({ params }: { params: { courseId: string } }) => {
   const { userId } = await getServerUserSession();
@@ -91,7 +92,7 @@ const CourseIdPage = async ({ params }: { params: { courseId: string } }) => {
           <div className="flex flex-col gap-y-2">
             <h1 className="text-2xl font-medium">Course setup</h1>
             <span className="text-sm text-slate-700">
-              Complete all fields {completionText}
+              Complete all required fields {completionText}
             </span>
           </div>
           <Actions
@@ -107,6 +108,7 @@ const CourseIdPage = async ({ params }: { params: { courseId: string } }) => {
               <h2 className="text-xl">Customize your course</h2>
             </div>
             <TitleForm initialData={course} courseId={course.id} />
+            <SlugTitleForm initialData={course} courseId={course.id} />
             <DescriptionForm initialData={course} courseId={course.id} />
             <LearningOutcomesForm initialData={course} courseId={course.id} />
             <CourseRequirementsForm initialData={course} courseId={course.id} />

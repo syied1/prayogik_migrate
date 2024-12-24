@@ -109,5 +109,16 @@ body,
 .slick-next {
   right: -10px !important;
 }
+.jodit-table {
+  border: 1px solid black !important;
+  border-collapse: collapse !important;
+}
+
+.jodit-table th,
+.jodit-table td {
+  border: 1px solid black !important;
+  padding: 4px !important; 
+}
+
 
 @import "~@uploadthing/react/styles.css";

@@ -4,6 +4,7 @@ import { ToastProvider } from "@/components/providers/toaster-provider";
 import type { Metadata } from "next";
 import { Noto_Serif_Bengali } from "next/font/google";
 import "./globals.css";
+import NotificationHandler from "@/components/notificationHandler/NotificationHandler";
 
 const noto_serif_bengali = Noto_Serif_Bengali({ subsets: [] });
 
@@ -24,6 +25,7 @@ export default function RootLayout({
           <div>{children}</div>
           <ConfettiProvider />
           <ToastProvider />
+         
         </body>
       </AuthProvider>
     </html>

@@ -35,11 +35,11 @@ export async function PATCH(
     });
 
     if (!lesson) {
-      return new NextResponse("lesson Not Found", { status: 404 });
+      return new NextResponse("Lesson not found", { status: 404 });
     }
 
     // Ensure required fields are present before publishing
-    if (!lesson.title || !lesson.description || !lesson.videoUrl) {
+    if (!lesson.title) {
       return new NextResponse("Missing required fields for publishing", {
         status: 400,
       });

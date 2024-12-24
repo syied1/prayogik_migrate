@@ -1,26 +1,47 @@
+// @ts-nocheck
+
 "use client";
 
 import axios from "axios";
-import { CheckCircle, XCircle } from "lucide-react";
+import { CheckCircle, Loader } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
-
 import { Button } from "@/components/ui/button";
 import { useConfettiStore } from "@/hooks/use-confetti-store";
+import { getProgress } from "@/actions/get-progress";
+import { getServerUserSession } from "@/lib/getServerUserSession";
+
+interface Lesson {
+  id: string;
+  slug: string;
+  title: string;
+  // Add other relevant attributes for Lesson here
+}
+
+interface Course {
+  id: string;
+  slug: string;
+  lessons: Lesson[];
+  // Add other relevant attributes for Course here
+}
 
 interface CourseProgressButtonProps {
-  chapterId: string;
+  course: Course;
+  lessonId: string;
   courseId: string;
+  nextLessonId?: string;
   isCompleted?: boolean;
-  nextChapterId?: string;
-};
+  userId: any;
+}
 
 export const CourseProgressButton = ({
-  chapterId,
+  course,
+  lessonId,
   courseId,
-  isCompleted,
-  nextChapterId
+  nextLessonId,
+  isCompleted = false,
+  userId,
 }: CourseProgressButtonProps) => {
   const router = useRouter();
   const confetti = useConfettiStore();
@@ -28,41 +49,79 @@ export const CourseProgressButton = ({
 
   const onClick = async () => {
     try {
+      let lessonSlug;
+
       setIsLoading(true);
 
-      await axios.put(`/api/courses/${courseId}/chapters/${chapterId}/progress`, {
-        isCompleted: !isCompleted
+      if (nextLessonId) {
+        lessonSlug = findLessonSlugById(nextLessonId); // Pass lessonId to find
+      }
+
+      // Update the lesson progress in the database
+      await axios.put(`/api/courses/${courseId}/lessons/${lessonId}/progress`, {
+        isCompleted: !isCompleted,
       });
 
-      if (!isCompleted && !nextChapterId) {
+      // Trigger confetti if a lesson is completed
+      // if (!isCompleted) {
+      //   confetti.onOpen();
+      // }
+
+      // Navigate to the next lesson if applicable
+      if (!isCompleted && nextLessonId && lessonSlug) {
+        router.push(`/courses/${course.slug}/${lessonSlug}`);
+      }
+
+      // toast.success("Progress updated");
+
+      // fetching progress percentage
+
+      const { data } = await axios.post(`/api/courses/${courseId}`, {
+        userId,
+        courseId: course.id,
+      });
+
+      const progressPercentage = data.progress;
+      // console.log("progressPercentage:", progressPercentage);
+      if (progressPercentage == "100") {
         confetti.onOpen();
+        // toast.success("Course completed");
+      } else {
+        toast.success("Progress updated");
       }
 
-      if (!isCompleted && nextChapterId) {
-        router.push(`/courses/${courseId}/chapters/${nextChapterId}`);
-      }
-
-      toast.success("Progress updated");
-      router.refresh();
-    } catch {
+      router.refresh(); // Refresh the page or update local state as needed
+    } catch (error) {
+      console.error(error);
       toast.error("Something went wrong");
     } finally {
       setIsLoading(false);
     }
-  }
+  };
 
-  const Icon = isCompleted ? XCircle : CheckCircle
+  const findLessonSlugById = (lessonId: string) => {
+    const lesson = course.lessons.find((lesson) => lesson.id === lessonId);
+    return lesson ? lesson.slug : null;
+  };
 
   return (
     <Button
-      onClick={onClick}
-      disabled={isLoading}
+      onClick={isCompleted ? undefined : onClick} // Only set onClick if not completed
+      disabled={isLoading || isCompleted} // Disable if loading or already completed
       type="button"
       variant={isCompleted ? "outline" : "success"}
       className="w-full md:w-auto"
     >
-      {isCompleted ? "Not completed" : "Mark as complete"}
-      <Icon className="h-4 w-4 ml-2" />
+      {isLoading ? (
+        <Loader className="h-4 w-4 animate-spin mr-2" />
+      ) : (
+        <>
+          {isCompleted ? "Completed" : "Mark as complete"}
+          <CheckCircle
+            className={`h-4 w-4 ml-2 ${isCompleted ? "text-teal-700" : ""}`}
+          />
+        </>
+      )}
     </Button>
-  )
-}
+  );
+};

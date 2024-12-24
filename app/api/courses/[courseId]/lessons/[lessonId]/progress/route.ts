@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 
 export async function PUT(
   req: Request,
-  { params }: { params: { courseId: string; chapterId: string } }
+  { params }: { params: { courseId: string; lessonId: string } }
 ) {
   try {
     // Get the user session
@@ -18,12 +18,12 @@ export async function PUT(
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    // Upsert user progress based on the userId and chapterId
+    // Upsert user progress based on the userId and lessonId
     const userProgress = await db.userProgress.upsert({
       where: {
-        userId_chapterId: {
+        userId_lessonId: {
           userId,
-          chapterId: params.chapterId,
+          lessonId: params.lessonId,
         },
       },
       update: {
@@ -31,7 +31,7 @@ export async function PUT(
       },
       create: {
         userId,
-        chapterId: params.chapterId,
+        lessonId: params.lessonId,
         isCompleted,
       },
     });

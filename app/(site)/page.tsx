@@ -8,7 +8,6 @@ import WhyChoose from "./_components/home/WhyChoose";
 import { Suspense } from "react";
 import FeaturedCourses from "./_components/home/FeaturedCourses";
 import SkeletonCard from "@/components/SkeletonCard";
-import CourseInclusions from "../tst/page";
 
 // export const revalidate = 3600; // invalidate every hour
 // request comes in, at most once every 60 seconds.
@@ -79,7 +78,6 @@ export default async function Page() {
       <PrayogikHero />
       {/* <Courses courses={courses} /> */}
       <Suspense fallback={<SkeletonCard />}>
-      <CourseInclusions />
         <FeaturedCourses />
       </Suspense>
       <Testimonials />

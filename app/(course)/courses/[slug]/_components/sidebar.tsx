@@ -11,10 +11,12 @@ export default function Sidebar({
   onVideoUrlUpdate,
   userId
 }) {
+  // console.log("access", access);
   return (
     <div>
       {access ? (
         <StudentSidebar
+         courseSlug = {course?.slug}
           lesson={lesson}
           videoUrl={videoUrl}
           onVideoUrlUpdate={onVideoUrlUpdate} // Prop for updating video URL

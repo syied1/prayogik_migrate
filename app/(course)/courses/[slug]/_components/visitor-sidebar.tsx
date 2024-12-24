@@ -13,28 +13,46 @@ export default function VisitorSidebar({ course, access, userId }: any) {
   const freeLesson = course?.lessons?.find(
     (lesson: any) => lesson.isFree && lesson.videoUrl
   );
-  // console.log("user id from visitor siderbar", userId);
+  // console.log("visitor-siderbar check", course);
 
   return (
     <div>
       {/* Video Modal */}
       <Dialog>
         <DialogTrigger asChild>
-          <div className="relative w-full aspect-video cursor-pointer">
-            <Image
-              fill
-              className="w-full h-full object-cover"
-              alt="course image"
-              src={course.imageUrl}
-            />
-            <Image
-              alt="play icon"
-              src="/images/courses/video-icon.svg"
-              height={100}
-              width={100}
-              className="absolute top-20 left-36 flex items-center justify-center mt-4"
-            />
-          </div>
+          {course?.lessons[0]?.videoUrl ? (
+            <div className="relative w-full aspect-video cursor-pointer">
+              {/* Play Icon */}
+              <Image
+                alt="play icon"
+                src="/images/courses/video-icon.svg"
+                height={100}
+                width={100}
+                className="absolute top-20 left-36 flex items-center justify-center mt-4"
+              />
+              {/* Course Image */}
+              <Image
+                alt={course.imageUrl}
+                className="object-cover h-[250px]"
+                height={100}
+                width={400}
+                src={course.imageUrl}
+                priority
+              />
+            </div>
+          ) : (
+            <div className="relative w-full aspect-video">
+              {/* Course Image Only */}
+              <Image
+                alt={course.imageUrl}
+                className="object-cover h-[250px]"
+                height={100}
+                width={400}
+                src={course.imageUrl}
+                priority
+              />
+            </div>
+          )}
         </DialogTrigger>
         {freeLesson && (
           <VideoPopUp
@@ -56,7 +74,8 @@ export default function VisitorSidebar({ course, access, userId }: any) {
           <hr className="flex-grow border-gray-300" />
         </div>
         <SingleCoursePrice course={course} access={access} userId={userId} />
-        <div className="mb-4">
+        {/*------------- coupon------------------ */}
+        {/* <div className="mb-4">
           <p className="text-gray-500 mt-4 text-sm">Coupon</p>
           <div className="flex mt-1">
             <Input
@@ -68,7 +87,7 @@ export default function VisitorSidebar({ course, access, userId }: any) {
               Apply
             </Button>
           </div>
-        </div>
+        </div> */}
       </div>
     </div>
   );
