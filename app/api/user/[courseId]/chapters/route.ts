@@ -29,9 +29,9 @@ export async function POST(
     }
 
     // Fetch the last chapter to determine the position for the new chapter
-    const lastChapter = await db.chapter.findFirst({
+    const lastChapter = await db.lesson.findFirst({
       where: {
-        courseId: params.courseId,
+        id: params.courseId,
       },
       orderBy: {
         position: "desc",
@@ -41,10 +41,10 @@ export async function POST(
     const newPosition = lastChapter ? lastChapter.position + 1 : 1;
 
     // Create a new chapter
-    const chapter = await db.chapter.create({
+    const chapter = await db.lesson.create({
       data: {
         title,
-        courseId: params.courseId,
+        id: params.courseId,
         position: newPosition,
       },
     });

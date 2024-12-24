@@ -36,7 +36,7 @@ export const getChapter = async ({
     });
 
     // Fetch chapter details if it's published
-    const chapter = await db.chapter.findUnique({
+    const chapter = await db.lesson.findUnique({
       where: {
         id: chapterId,
         isPublished: true,
@@ -62,7 +62,7 @@ export const getChapter = async ({
 
     // If the chapter is free or purchased, find the next chapter
     if (chapter.isFree || purchase) {
-      nextChapter = await db.chapter.findFirst({
+      nextChapter = await db.lesson.findFirst({
         where: {
           courseId: courseId,
           isPublished: true,

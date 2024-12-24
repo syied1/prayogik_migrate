@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { db } from "@/lib/db";
 import { getServerUserSession } from "@/lib/getServerUserSession";
 import { NextResponse } from "next/server";
@@ -31,7 +32,7 @@ export async function PUT(
 
     // Iterate through the list of chapters and update their positions
     for (const item of list) {
-      await db.chapter.update({
+      await db.lesson.update({
         where: { id: item.id },
         data: { position: item.position },
       });

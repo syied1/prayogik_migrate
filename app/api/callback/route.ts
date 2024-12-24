@@ -202,6 +202,8 @@ const getExpiryDate = (frequency, duration) => {
         currentDate.getUTCSeconds()
       )
     );
+  } else if (frequency.toLowerCase() === "lifetime") {
+    expiresAt = null;
   } else {
     throw new Error('Invalid unit provided. Use "years" or "months".');
   }

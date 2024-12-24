@@ -29,7 +29,7 @@ export async function POST(
     }
 
     // Fetch the last chapter to determine the position for the new chapter
-    const lastChapter = await db.chapter.findFirst({
+    const lastChapter = await db.lesson.findFirst({
       where: {
         courseId: params.courseId,
       },
@@ -43,14 +43,14 @@ export async function POST(
     const { title } = await req.json();
     const slug = await compositeSlugify(
       title,
-      db.chapter,
+      db.lesson,
       "slug",
       "courseId",
       courseId
     );
 
     // Create a new chapter
-    const chapter = await db.chapter.create({
+    const chapter = await db.lesson.create({
       data: {
         title,
         courseId: params.courseId,

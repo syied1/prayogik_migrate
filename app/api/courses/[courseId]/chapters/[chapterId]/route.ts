@@ -35,7 +35,7 @@ export async function PATCH(
     }
 
     // Update the chapter with the new values
-    const updatedChapter = await db.chapter.update({
+    const updatedChapter = await db.lesson.update({
       where: {
         id: params.chapterId,
         courseId: params.courseId, // Ensure the chapter belongs to the correct course
@@ -77,7 +77,7 @@ export async function GET(
     }
 
     // Retrieve the specific chapter data
-    const chapter = await db.chapter.findUnique({
+    const chapter = await db.lesson.findUnique({
       where: {
         id: params.chapterId,
         courseId: params.courseId, // Ensure the chapter belongs to the correct course
@@ -120,7 +120,7 @@ export async function DELETE(
     }
 
     // Find the chapter to delete
-    const chapter = await db.chapter.findUnique({
+    const chapter = await db.lesson.findUnique({
       where: {
         id: params.chapterId,
         courseId: params.courseId,
@@ -183,19 +183,19 @@ export async function DELETE(
     // Delete any user progress associated with the chapter
     await db.userProgress.deleteMany({
       where: {
-        chapterId: chapter.id,
+        id: chapter.id,
       },
     });
 
     // Delete the chapter
-    const deletedChapter = await db.chapter.delete({
+    const deletedChapter = await db.lesson.delete({
       where: {
         id: params.chapterId,
       },
     });
 
     // Check if there are any other published chapters in the course
-    const remainingPublishedChapters = await db.chapter.count({
+    const remainingPublishedChapters = await db.lesson.count({
       where: {
         courseId: params.courseId,
         isPublished: true,

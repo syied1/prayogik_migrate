@@ -77,9 +77,9 @@ export async function DELETE(
       }
 
       // Delete the chapters after videos are deleted
-      await db.chapter.deleteMany({
+      await db.lesson.deleteMany({
         where: {
-          courseId: params.courseId,
+          id: params.courseId,
         },
       });
     }
