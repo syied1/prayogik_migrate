@@ -57,7 +57,7 @@ const formSchema = z.object({
 export const MultiplePriceForm = ({ initialData, courseId }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [isFreeSelected, setIsFreeSelected] = useState(false);
-  const [showDiscountFields, setShowDiscountFields] = useState(false);
+  const [showDiscountFields, setShowDiscountFields] = useState([]);
   const currentDate = new Date().toISOString().split("T")[0];
   const [prices, setPrices] = useState(
     initialData?.prices?.length
@@ -234,7 +234,20 @@ export const MultiplePriceForm = ({ initialData, courseId }) => {
     }
   }, [initialData]);
 
-  
+  // Whenever prices change, update showDiscountFields array
+  useEffect(() => {
+    setShowDiscountFields(new Array(prices.length).fill(false));
+  }, [prices]);
+
+  // Toggle the discount fields for the specified index
+  const toggleDiscountField = (index) => {
+    setShowDiscountFields((prevState) => {
+      const newState = [...prevState];
+      newState[index] = !newState[index];
+      return newState;
+    });
+  };
+
   return (
     <div className="mt-6 border bg-slate-100 rounded-md p-4">
       <div className="font-medium flex items-center justify-between">
@@ -440,7 +453,7 @@ export const MultiplePriceForm = ({ initialData, courseId }) => {
                     {/* Conditionally Render Discount Fields */}
                     {/* Discount Button */}
 
-                    {showDiscountFields && (
+                    {showDiscountFields[index] && (
                       <>
                         {/* Discounted Price */}
                         <FormField
@@ -512,7 +525,7 @@ export const MultiplePriceForm = ({ initialData, courseId }) => {
                       <Button
                         type="button"
                         onClick={() => {
-                          setShowDiscountFields(!showDiscountFields);
+                          toggleDiscountField(index);
                           form.setValue(
                             `prices.${index}.discountedAmount`,
                             undefined
@@ -524,7 +537,7 @@ export const MultiplePriceForm = ({ initialData, courseId }) => {
                         }}
                         variant="outline"
                       >
-                        {showDiscountFields
+                        {showDiscountFields[index]
                           ? "Remove Discount"
                           : "Add Discount"}
                       </Button>
