@@ -9,12 +9,12 @@ export async function POST(request: Request) {
   console.log("PricesData:", pricesData);
 
   const missingData = pricesData.some(
-    (price) => !price.regularAmount || !price.courseId
+    (price) => !price.courseId // Only check for courseId as mandatory
   );
 
   if (missingData) {
     return NextResponse.json(
-      { message: "Missing required data!" },
+      { message: "Missing required data: courseId!" },
       { status: 400 }
     );
   }
@@ -35,39 +35,32 @@ export async function POST(request: Request) {
     const upsertPromises = pricesData.map((priceData, index) => {
       const existingPrice = existingPrices[index];
 
+      const priceDataToSave = {
+        isFree: priceData.isFree ?? false, // Default to false if undefined
+        regularAmount: priceData.regularAmount ?? 0, // Allow null
+        discountedAmount: priceData.discountedAmount ?? null, // Allow null
+        discountExpiresOn: priceData.discountExpiresOn ?? null, // Allow null
+        isLifeTime: priceData.frequency === "LIFETIME",
+        duration:
+          priceData.duration === "NA" ? 0 : parseInt(priceData.duration),
+        frequency: priceData.frequency,
+        course: {
+          connect: {
+            id: priceData.courseId,
+          },
+        },
+      };
+
       if (existingPrice) {
-        // If the price exists, update it
+        // Update existing price
         return db.price.update({
           where: { id: priceData.id },
-          data: {
-            isFree: false,
-            regularAmount: priceData.regularAmount,
-            discountedAmount: priceData.discountedAmount,
-            discountExpiresOn: priceData.discountExpiresOn,
-            isLifeTime: priceData.frequency === "LIFETIME",
-            duration:
-              priceData.duration === "NA" ? 0 : parseInt(priceData.duration),
-            frequency: priceData.frequency,
-          },
+          data: priceDataToSave,
         });
       } else {
-        // If the price does not exist, create it
+        // Create new price
         return db.price.create({
-          data: {
-            isFree: false,
-            regularAmount: priceData.regularAmount,
-            discountedAmount: priceData.discountedAmount,
-            discountExpiresOn: priceData.discountExpiresOn,
-            isLifeTime: priceData.frequency === "LIFETIME",
-            duration:
-              priceData.duration === "NA" ? 0 : parseInt(priceData.duration),
-            frequency: priceData.frequency,
-            course: {
-              connect: {
-                id: priceData.courseId,
-              },
-            },
-          },
+          data: priceDataToSave,
         });
       }
     });
@@ -84,6 +77,7 @@ export async function POST(request: Request) {
     );
   }
 }
+
 export async function DELETE(request: Request) {
   const { searchParams } = new URL(request.url);
   const courseId = searchParams.get("courseId");
@@ -111,45 +105,46 @@ export async function DELETE(request: Request) {
       );
     }
 
-    // Create a default price entry with price set to 0 if no prices exist
-    await db.price.create({
-      data: {
-        isFree: true,
-        regularAmount: 0,
-        discountedAmount: null, // or another appropriate value
-        discountExpiresOn: null, // or set an expiry if needed
-        isLifeTime: false,
-        duration: null, // or specify a duration as needed
-        frequency: "LIFETIME", // Or set a default frequency value
-        course: {
-          connect: {
-            id: courseId,
-          },
-        },
-      },
-    });
-
     return NextResponse.json(
       {
-        message:
-          "All prices deleted successfully, course marked as free, and a default price created.",
+        message: "All prices deleted successfully",
       },
       { status: 204 }
     );
   } catch (error) {
-    // console.error("Failed to delete prices:", error);
+    console.error("Failed to delete prices:", error);
+  }
+}
 
-    // // Check if the error is related to the database (Prisma specific)
-    // if (error instanceof Error) {
-    //   return NextResponse.json(
-    //     { message: "Failed to delete prices", error: error.message },
-    //     { status: 500 }
-    //   );
-    // }
 
-    // return NextResponse.json(
-    //   { message: "Failed to delete prices" },
-    //   { status: 500 }
-    // );
+export async function GET(request: Request) {
+  // Extract the courseId from the query parameters
+  const { searchParams } = new URL(request.url);
+  const courseId = searchParams.get("courseId");
+
+  // Validate the courseId parameter
+  if (!courseId) {
+    return NextResponse.json(
+      { message: "Missing courseId parameter." },
+      { status: 400 }
+    );
+  }
+
+  try {
+    // Fetch prices associated with the provided courseId
+    const prices = await db.price.findMany({
+      where: {
+        courseId: courseId, // Filter prices by courseId
+      },
+    });
+
+    // Return the fetched prices
+    return NextResponse.json(prices, { status: 200 });
+  } catch (error) {
+    console.error("Failed to fetch prices:", error);
+    return NextResponse.json(
+      { message: "Failed to fetch prices." },
+      { status: 500 }
+    );
   }
 }

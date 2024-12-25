@@ -6,7 +6,7 @@ import axios from "axios";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, useFieldArray } from "react-hook-form";
 import { Pencil, Plus, Minus } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import { CalendarIcon } from "lucide-react";
@@ -57,19 +57,25 @@ const formSchema = z.object({
 export const MultiplePriceForm = ({ initialData, courseId }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [isFreeSelected, setIsFreeSelected] = useState(false);
+  const [showDiscountFields, setShowDiscountFields] = useState(false);
+  const currentDate = new Date().toISOString().split("T")[0];
   const [prices, setPrices] = useState(
     initialData?.prices?.length
       ? initialData.prices.map((price) => ({
           ...price,
           duration: price.duration === 0 ? "NA" : "1",
+          // discountExpiresOn: price?.discountExpiresOn ? price.discountExpiresOn : currentDate,
+          discountExpiresOn: price?.discountExpiresOn
+            ? price.discountExpiresOn
+            : null || undefined,
         }))
       : [
           {
-            regularAmount: undefined,
+            regularAmount: 0,
             discountedAmount: undefined,
             duration: "1",
             frequency: "YEARLY",
-            discountExpiresOn: undefined,
+            discountExpiresOn: null || undefined,
           },
         ]
   );
@@ -110,46 +116,88 @@ export const MultiplePriceForm = ({ initialData, courseId }) => {
 
   const onSubmit = async (values) => {
     if (isFreeSelected) {
-      try {
+      const updatedValuesForFreeCourse = [
+        {
+          isFree: true,
+          regularAmount: 0,
+          discountedAmount: null,
+          duration: "1",
+          frequency: "LIFETIME",
+          discountExpiresOn: null,
+          courseId: courseId,
+        },
+      ];
+      const existingPrices = await fetchExistingPrices(courseId);
+
+      // Only delete if existing prices are found
+      if (existingPrices.length > 0) {
         await deleteAllPricesFromDb(courseId);
-      } catch {}
-      router.refresh();
-    }
-
-    const updatedValues = values.prices
-      .map((price) => ({
-        ...price,
-        duration: price.duration === "1" ? "1" : "NA",
-        courseId,
-      }))
-      .filter((price) => price.regularAmount !== undefined);
-
-    // Identify removed prices based on ID
-    const removedPrices = initialData.prices
-      .filter(
-        (price) => !updatedValues.some((uPrice) => uPrice.id === price.id)
-      )
-      .map((price) => price.id);
-
-    // Delete removed prices from the database
-    for (const priceId of removedPrices) {
-      await deletePriceFromDb(priceId);
-    }
-
-    // Update the remaining prices in the database
-    try {
-      await updateCoursePrices(updatedValues);
+      }
+      await updateCoursePrices(updatedValuesForFreeCourse);
       toast.success("Course prices updated successfully");
       toggleEdit();
+
       router.refresh();
-    } catch (error) {
-      toast.error("Failed to update course prices. Please try again.");
+      return;
+    } else {
+      const existingPrices = await fetchExistingPrices(courseId);
+
+      // Only delete if existing prices are found
+      if (existingPrices.length > 0) {
+        await deleteAllPricesFromDb(courseId);
+      }
+      const updatedValues = values.prices
+        ?.filter((price) => !price.isFree)
+        ?.map((price) => ({
+          ...price,
+          duration: price.duration === "1" ? "1" : "NA",
+          courseId,
+        }));
+
+      // Identify removed prices based on ID
+      const removedPrices = initialData.prices
+        .filter(
+          (price) => !updatedValues.some((uPrice) => uPrice.id === price.id)
+        )
+        .map((price) => price.id);
+
+      // Delete removed prices from the database
+      for (const priceId of removedPrices) {
+        await priceId;
+      }
+
+      // Update the remaining prices in the database
+      try {
+        await updateCoursePrices(updatedValues);
+        toast.success("Course prices updated successfully");
+        toggleEdit();
+        router.refresh();
+      } catch (error) {
+        toast.error("Failed to update course prices. Please try again.");
+      }
     }
   };
   const onFreeCheckedChange = async (checked) => {
-    // Set the checkbox state
-    field.onChange(checked);
     setIsFreeSelected(checked);
+    field.onChange(checked);
+
+    // Ensure the form submits correctly when 'Free' is selected
+    if (checked) {
+      form.setValue("prices", [
+        {
+          isFree: true,
+          regularAmount: 0,
+          discountedAmount: null,
+          duration: "1",
+          frequency: "LIFETIME",
+          discountExpiresOn: null,
+          courseId: courseId,
+        },
+      ]);
+    } else {
+      // Reset values if 'Free' is unchecked
+      form.setValue("prices", initialData?.prices || []);
+    }
   };
 
   const deleteAllPricesFromDb = async (courseId) => {
@@ -166,7 +214,23 @@ export const MultiplePriceForm = ({ initialData, courseId }) => {
       console.error("Error deleting all prices:", error);
     }
   };
-
+  // Function to fetch existing prices for a given course ID
+  const fetchExistingPrices = async (courseId) => {
+    try {
+      const response = await axios.get(
+        `/api/courses/prices?courseId=${courseId}`
+      );
+      return response.data; // Assume response.data contains an array of prices
+    } catch (error) {
+      console.error("Error fetching existing prices:", error);
+      return [];
+    }
+  };
+  useEffect(() => {
+    if (initialData?.prices[0]?.isFree) {
+      setIsFreeSelected(true);
+    }
+  }, [initialData]);
   return (
     <div className="mt-6 border bg-slate-100 rounded-md p-4">
       <div className="font-medium flex items-center justify-between">
@@ -195,41 +259,54 @@ export const MultiplePriceForm = ({ initialData, courseId }) => {
                     key={index}
                     className="bg-white flex justify-between p-2 border border-gray-200 rounded-md mb-2"
                   >
-                    <div>
-                      <span className="text-base">
-                        ৳ {price.discountedAmount}{" "}
-                      </span>
-                      {price.discountedAmount && (
-                        <span className="line-through text-sm text-gray-600">
-                          {price.regularAmount}
+                    {price.discountedAmount ? (
+                      <div>
+                        <span className="text-base">
+                          ৳ {price.discountedAmount}{" "}
                         </span>
-                      )}
-                    </div>
-                    <div>
-                      <span className="text-sm">
-                        {/*
+                        {price.discountedAmount && (
+                          <span className="line-through text-sm text-gray-600">
+                            {price.regularAmount}
+                          </span>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="">
+                        <span className="text-base">
+                          ৳ {price.regularAmount}{" "}
+                        </span>
+                      </div>
+                    )}
+
+                    {!price.isFree && (
+                      <div>
+                        <span className="text-sm">
+                          {/*
                         {price.duration === "NA" && price.frequency === "LIFETIME"
                           ? ""
                         : `${price.duration} `}
                       */}
 
-                        {price.frequency === "LIFETIME"
-                          ? "Lifetime"
-                          : price.frequency === "YEARLY"
-                          ? "Yearly"
-                          : "Monthly"}
-                      </span>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600">
-                        Offer expires on{" "}
-                        <span className="text-gray-900">
-                          {moment(price.discountExpiresOn).format(
-                            "MMM Do YYYY"
-                          )}
+                          {price.frequency === "LIFETIME"
+                            ? "Lifetime"
+                            : price.frequency === "YEARLY"
+                            ? "Yearly"
+                            : "Monthly"}
                         </span>
-                      </p>
-                    </div>
+                      </div>
+                    )}
+                    {price.discountExpiresOn && (
+                      <div>
+                        <p className="text-sm text-gray-600">
+                          Offer expires on{" "}
+                          <span className="text-gray-900">
+                            {moment(price.discountExpiresOn).format(
+                              "MMM Do YYYY"
+                            )}
+                          </span>
+                        </p>
+                      </div>
+                    )}
                   </div>
                 ))
               )
@@ -253,15 +330,10 @@ export const MultiplePriceForm = ({ initialData, courseId }) => {
                 <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
                   <FormControl>
                     <Checkbox
-                      checked={field.value}
+                      checked={isFreeSelected}
                       onCheckedChange={async (checked) => {
                         field.onChange(checked);
                         setIsFreeSelected(checked);
-
-                        if (checked) {
-                          await deleteAllPricesFromDb(courseId); // Ensure courseId is defined in your component
-                          router.refresh(); // Refresh to reflect changes
-                        }
                       }}
                     />
                   </FormControl>
@@ -361,67 +433,98 @@ export const MultiplePriceForm = ({ initialData, courseId }) => {
                       )}
                     />
 
-                    {/* Discounted Price */}
-                    <FormField
-                      control={form.control}
-                      name={`prices.${index}.discountedAmount`}
-                      render={({ field }) => (
-                        <FormItem className="w-full sm:w-[120px]">
-                          {index === 0 && (
-                            <FormLabel className="text-gray-700 text-sm">
-                              Discounted Price
-                            </FormLabel>
+                    {/* Conditionally Render Discount Fields */}
+                    {/* Discount Button */}
+
+                    {showDiscountFields && (
+                      <>
+                        {/* Discounted Price */}
+                        <FormField
+                          control={form.control}
+                          name={`prices.${index}.discountedAmount`}
+                          render={({ field }) => (
+                            <FormItem className="w-full sm:w-[120px]">
+                              {index === 0 && (
+                                <FormLabel className="text-gray-700 text-sm">
+                                  Discounted Price
+                                </FormLabel>
+                              )}
+
+                              <FormControl>
+                                <Input
+                                  type="number"
+                                  step="1"
+                                  placeholder="discounted"
+                                  disabled={isSubmitting}
+                                  {...field}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
                           )}
+                        />
 
-                          <FormControl>
-                            <Input
-                              type="number"
-                              step="1"
-                              placeholder="discounted"
-                              disabled={isSubmitting}
-                              {...field}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                        {/* Discount expires on */}
+                        <FormField
+                          control={form.control}
+                          name={`prices.${index}.discountExpiresOn`}
+                          render={({ field }) => (
+                            <FormItem className="w-full sm:w-[150px] flex flex-col">
+                              {index === 0 && (
+                                <FormLabel className="text-gray-700 text-sm">
+                                  Discount Expired On
+                                </FormLabel>
+                              )}
 
-                    {/* Discount expires on */}
-                    <FormField
-                      control={form.control}
-                      name={`prices.${index}.discountExpiresOn`}
-                      render={({ field }) => (
-                        <FormItem className="w-full sm:w-[150px] flex flex-col">
-                          {index === 0 && (
-                            <FormLabel className="text-gray-700 text-sm">
-                              Discount Expired On
-                            </FormLabel>
+                              <Popover>
+                                <PopoverTrigger asChild>
+                                  <Button variant="outline">
+                                    {field.value
+                                      ? format(field.value, "MMM dd, yyyy")
+                                      : "Pick a date"}
+                                    <CalendarIcon className="ml-2 h-4 w-4" />
+                                  </Button>
+                                </PopoverTrigger>
+                                <PopoverContent
+                                  className="w-auto"
+                                  align="start"
+                                >
+                                  <Calendar
+                                    mode="single"
+                                    selected={field.value}
+                                    onSelect={(date) => {
+                                      field.onChange(date);
+                                    }}
+                                    initialFocus
+                                  />
+                                </PopoverContent>
+                              </Popover>
+                            </FormItem>
                           )}
-
-                          <Popover>
-                            <PopoverTrigger asChild>
-                              <Button variant="outline">
-                                {field.value
-                                  ? format(field.value, "MMM dd, yyyy")
-                                  : "Pick a date"}
-                                <CalendarIcon className="ml-2 h-4 w-4" />
-                              </Button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto" align="start">
-                              <Calendar
-                                mode="single"
-                                selected={field.value}
-                                onSelect={(date) => {
-                                  field.onChange(date);
-                                }}
-                                initialFocus
-                              />
-                            </PopoverContent>
-                          </Popover>
-                        </FormItem>
-                      )}
-                    />
+                        />
+                      </>
+                    )}
+                    <div className="flex items-center">
+                      <Button
+                        type="button"
+                        onClick={() => {
+                          setShowDiscountFields(!showDiscountFields);
+                          form.setValue(
+                            `prices.${index}.discountedAmount`,
+                            undefined
+                          ); // Reset discountedAmount
+                          form.setValue(
+                            `prices.${index}.discountExpiresOn`,
+                            undefined
+                          ); // Reset discountExpiresOn
+                        }}
+                        variant="outline"
+                      >
+                        {showDiscountFields
+                          ? "Remove Discount"
+                          : "Add Discount"}
+                      </Button>
+                    </div>
 
                     <div
                       className={`flex mt-2 sm:mt-0 flex-row sm:flex-col gap-1 w-full sm:w-auto justify-end sm:items-end  h-auto`}
@@ -473,7 +576,7 @@ export const MultiplePriceForm = ({ initialData, courseId }) => {
 
             <div className="flex justify-start">
               <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? "Saving..." : "Save Prices"}
+                {isSubmitting ? "Saving..." : "Save"}
               </Button>
             </div>
           </form>

@@ -71,7 +71,8 @@ const CourseIdPage = async ({ params }: { params: { courseId: string } }) => {
     course.title,
     course.description,
     course.imageUrl,
-    course.prices.some((price) => price.regularAmount),
+    course.prices.some((price) => price.regularAmount) ||
+      course.prices[0]?.isFree,
     course.categoryId,
     course.lessons.some((chapter) => chapter.isPublished),
   ];
