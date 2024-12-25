@@ -78,9 +78,12 @@ export async function POST(
       cus_name: user.name,
       cus_email: user.email,
       cus_phone: "Not available",
-      amount: isDiscountExpired(price.discountExpiresOn)
-        ? price.regularAmount
-        : price.discountedAmount,
+      amount:
+        price.discountExpiresOn &&
+        price.discountedAmount &&
+        !isDiscountExpired(price.discountExpiresOn)
+          ? price.discountedAmount
+          : price.regularAmount,
       tran_id: uuid(),
       signature_key: process.env.AAMARPAY_SIGNATURE_KEY,
       store_id: process.env.AAMARPAY_STORE_ID,

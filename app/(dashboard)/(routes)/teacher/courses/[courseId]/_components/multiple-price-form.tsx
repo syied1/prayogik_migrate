@@ -65,14 +65,16 @@ export const MultiplePriceForm = ({ initialData, courseId }) => {
           ...price,
           duration: price.duration === 0 ? "NA" : "1",
           // discountExpiresOn: price?.discountExpiresOn ? price.discountExpiresOn : currentDate,
-          discountExpiresOn: price?.discountExpiresOn
-            ? price.discountExpiresOn
-            : null || undefined,
+          // discountExpiresOn: price?.discountExpiresOn
+          //   ? price.discountExpiresOn
+          //   : null || undefined,
+          discountedAmount: null || undefined,
+          discountExpiresOn: null || undefined,
         }))
       : [
           {
             regularAmount: 0,
-            discountedAmount: undefined,
+            discountedAmount: null || undefined,
             duration: "1",
             frequency: "YEARLY",
             discountExpiresOn: null || undefined,
@@ -231,6 +233,8 @@ export const MultiplePriceForm = ({ initialData, courseId }) => {
       setIsFreeSelected(true);
     }
   }, [initialData]);
+
+  
   return (
     <div className="mt-6 border bg-slate-100 rounded-md p-4">
       <div className="font-medium flex items-center justify-between">
