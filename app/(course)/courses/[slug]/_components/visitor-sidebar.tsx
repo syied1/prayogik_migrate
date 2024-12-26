@@ -20,7 +20,7 @@ export default function VisitorSidebar({ course, access, userId }: any) {
       {/* Video Modal */}
       <Dialog>
         <DialogTrigger asChild>
-          {course?.lessons[0]?.videoUrl ? (
+          {freeLesson?.videoUrl ? (
             <div className="relative w-full aspect-video cursor-pointer">
               {/* Play Icon */}
               <Image
@@ -66,13 +66,13 @@ export default function VisitorSidebar({ course, access, userId }: any) {
         )}
       </Dialog>
 
-      <div className="px-6 py-2">
-        <SubscriptionPrice />
+      <div className="px-6 mt-6">
+        {/* <SubscriptionPrice />
         <div className="flex items-center justify-center my-3">
           <hr className="flex-grow border-gray-300" />
           <span className="px-2 text-gray-500">or</span>
           <hr className="flex-grow border-gray-300" />
-        </div>
+        </div> */}
         <SingleCoursePrice course={course} access={access} userId={userId} />
         {/*------------- coupon------------------ */}
         {/* <div className="mb-4">

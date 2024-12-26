@@ -37,7 +37,7 @@ export default function SingleCoursePrice({ course, access, userId }) {
           {course.prices.map((price) => (
             <div
               key={price.id}
-              className="flex items-start space-x-2 gap-2 border border-gray-200 rounded-md mb-2 p-2 cursor-pointer"
+              className="flex items-start space-x-2 gap-2 border border-gray-200 rounded-md mb-2 p-2 cursor-pointer "
             >
               <RadioGroupItem value={price.id} id={price.id} />
               {isDiscountExpired(price?.discountExpiresOn) ? (
@@ -104,7 +104,9 @@ export default function SingleCoursePrice({ course, access, userId }) {
       <p className="text-center text-xs text-gray-700 mb-2">
         30-Day Money-Back Guarantee
       </p>
-      <p className="text-center text-xs text-gray-700">Full Lifetime Access</p>
+      <p className="text-center text-xs text-gray-700 mb-6">
+        Full Lifetime Access
+      </p>
     </>
   );
 }

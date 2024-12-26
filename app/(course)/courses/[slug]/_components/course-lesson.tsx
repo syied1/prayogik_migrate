@@ -50,7 +50,7 @@ export default function CourseLesson({ course }) {
               {/* <p className="text-gray-500 px-4 text-sm">duration</p> */}
             </div>
             <AccordionContent className="p-4">
-              <div className="flex items-start w-full">
+              <div className="flex items-start w-full gap-4">
                 {lesson.isFree ? (
                   <Dialog>
                     <DialogTrigger asChild>
@@ -119,13 +119,13 @@ export default function CourseLesson({ course }) {
                     </div>
                   </div>
                 )}
-                {lesson.videoUrl !== null ? (
+                {/* {lesson.videoUrl !== null ? (
                   <span className="text-gray-500">
                     {lesson?.duration || ""}
                   </span>
                 ) : (
                   <span></span>
-                )}
+                )} */}
               </div>
             </AccordionContent>
           </AccordionItem>

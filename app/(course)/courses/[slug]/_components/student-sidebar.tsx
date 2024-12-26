@@ -9,7 +9,12 @@ import {
   AccordionTrigger,
   AccordionContent,
 } from "@radix-ui/react-accordion";
-import { ChevronDown, PlayCircle } from "lucide-react";
+import {
+  ChevronDown,
+  FileTextIcon,
+  PlayCircle,
+  PlayCircleIcon,
+} from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 
 export default function StudentSidebar({
@@ -66,11 +71,29 @@ export default function StudentSidebar({
               }`}
               onClick={() => handlePlayClick(item)}
             >
-              <PlayCircle
+              {/* <PlayCircle
                 className={`w-5 h-5 min-w-[20px] ${
                   item.slug === lessonSlug ? "text-green-500" : "text-gray-500"
                 }`}
-              />
+              /> */}
+
+              {item.videoUrl !== null ? (
+                <PlayCircleIcon
+                  className={`w-5 h-5 min-w-[20px] ${
+                    item.slug === lessonSlug
+                      ? "text-green-500"
+                      : "text-gray-500"
+                  }`}
+                />
+              ) : (
+                <FileTextIcon
+                  className={`w-5 h-5 min-w-[20px] ${
+                    item.slug === lessonSlug
+                      ? "text-green-500"
+                      : "text-gray-500"
+                  }`}
+                />
+              )}
               <div className="text-sm flex gap-2">
                 <span className="min-w-max text-nowrap">
                   Lesson {index + 1}:
