@@ -1,5 +1,5 @@
-// @ts-nocheck
 "use client";
+
 import { Button } from "@/components/ui/button";
 import { UploadIcon } from "lucide-react";
 import { useCallback, useRef, useState } from "react";
@@ -11,27 +11,26 @@ const Uploader2 = ({ videoTitle, onUploaded }) => {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
   const [file, setFile] = useState(null);
+  const [duration, setDuration] = useState(null); // State for video duration
   const [message, setMessage] = useState({
     variant: "",
     title: "",
     description: "",
   });
-  const [videoDuration, setVideoDuration] = useState(null);
-  const fileInputRef = useRef();
-  const videoRef = useRef();
+
+  const fileInputRef = useRef(null);
 
   const removeFile = () => {
     setFile(null);
     setIsUploading(false);
+    setDuration(null); // Reset duration when file is removed
     setMessage({
       variant: "",
       title: "",
       description: "",
     });
-    setVideoDuration(null); // Reset video duration
-    // Reset the file input value so it can trigger another change event
     if (fileInputRef.current) {
-      fileInputRef.current.value = ""; // Reset input value
+      fileInputRef.current.value = "";
     }
   };
 
@@ -47,62 +46,51 @@ const Uploader2 = ({ videoTitle, onUploaded }) => {
     setUploadProgress(progress);
   };
 
-  const handleFileChange = useCallback(
-    (event) => {
-      const selectedFile = event.target.files[0];
-      if (selectedFile) {
-        setFile(selectedFile);
+  const calculateDuration = useCallback(async (selectedFile) => {
+    const videoElement = document.createElement("video");
+    videoElement.src = URL.createObjectURL(selectedFile);
 
-        // Create an object URL and load the video metadata
-        const videoURL = URL.createObjectURL(selectedFile);
-        const videoElement = videoRef.current;
+    return new Promise((resolve, reject) => {
+      videoElement.addEventListener("loadedmetadata", () => {
+        const videoDuration = Math.round(videoElement.duration);
+        setDuration(videoDuration); // Update duration
+        console.log("Video Duration:", videoDuration); // Log duration
+        resolve(videoDuration);
+      });
 
-        if (videoElement) {
-          videoElement.src = videoURL;
+      videoElement.addEventListener("error", (err) => {
+        reject(err);
+      });
+    });
+  });
 
-          // Wait for the metadata to be loaded (this includes duration)
-          videoElement.onloadedmetadata = () => {
-            setVideoDuration(videoElement.duration); // Set the video duration in state
-            onUploaded(selectedFile, videoElement.duration); // Pass video file and duration to parent
-          };
-        }
-      }
-    },
-    [onUploaded]
-  );
+  const handleFileChange = useCallback(async (event) => {
+    const selectedFile = event.target.files[0];
+    if (selectedFile) {
+      setFile(selectedFile);
+      await calculateDuration(selectedFile); // Calculate and set duration
+    }
+  }, []);
 
-  const handleDrop = useCallback(
-    (event) => {
-      event.preventDefault();
-      const droppedFile = event.dataTransfer.files[0];
-      if (droppedFile) {
-        setFile(droppedFile);
-
-        // Create an object URL and load the video metadata
-        const videoURL = URL.createObjectURL(droppedFile);
-        const videoElement = videoRef.current;
-
-        if (videoElement) {
-          videoElement.src = videoURL;
-
-          // Wait for the metadata to be loaded (this includes duration)
-          videoElement.onloadedmetadata = () => {
-            setVideoDuration(videoElement.duration); // Set the video duration in state
-            onUploaded(droppedFile, videoElement.duration); // Pass video file and duration to parent
-          };
-        }
-      }
-    },
-    [onUploaded]
-  );
+  const handleDrop = useCallback(async (event) => {
+    event.preventDefault();
+    const droppedFile = event.dataTransfer.files[0];
+    if (droppedFile) {
+      setFile(droppedFile);
+      await calculateDuration(droppedFile); // Calculate and set duration
+    }
+  }, []);
 
   const handleDragOver = useCallback((event) => {
     event.preventDefault();
   }, []);
 
   const handleUpload = useCallback(async () => {
-    const data = await getCredentials(videoTitle || "Untitled Video"); // Fetch credentials
+    const data = await getCredentials(videoTitle || "Untitled Video");
+    const videoId = data?.videoId;
+
     const uploadCreds = data.clientPayload;
+
     if (!file) {
       setMessage({
         variant: "error",
@@ -120,36 +108,36 @@ const Uploader2 = ({ videoTitle, onUploaded }) => {
         description: "Failed to get credentials. Please contact support.",
       });
       toast.error("Failed to get credentials. Please contact support.");
-
       return;
     }
+
     if (file && file.type !== "video/mp4") {
       toast.error("Please upload a valid MP4 file.");
       return;
     }
 
     setIsUploading(true);
+
     try {
       const result = await uploadFile(file, uploadCreds, handleUploadProgress);
+
+      onUploaded(videoId, duration);
 
       if (result.status === "success") {
         setUploadProgress(0);
         setFile(null);
         setIsUploading(false);
-
         setMessage({
           variant: "success",
           title: "Success!",
           description: result.message,
         });
-
         toast.success(result.message);
       } else {
         throw new Error(result);
       }
     } catch (err) {
       toast.error(err.message);
-
       setMessage({
         variant: "error",
         title: "Upload Failed",
@@ -158,24 +146,16 @@ const Uploader2 = ({ videoTitle, onUploaded }) => {
     } finally {
       setIsUploading(false);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [file]);
+  }, [file, duration]); // Ensure duration is included as a dependency
 
-  // Function to trigger the file input click
   const handleBrowseClick = () => {
     if (fileInputRef.current) {
       fileInputRef.current.click();
     }
   };
 
-  console.log("videoDuration", videoDuration);
-
   return (
     <div>
-      {/* {message && message.variant !== "" && (
-        <AlertComponent message={message} onClose={closeAlert} />
-      )} */}
-
       <div
         className="flex flex-col items-center justify-center w-full gap-3"
         onDrop={handleDrop}
@@ -198,7 +178,7 @@ const Uploader2 = ({ videoTitle, onUploaded }) => {
             className="hidden"
             accept="video/mp4"
             onChange={handleFileChange}
-            ref={fileInputRef} // Attach the ref to the input
+            ref={fileInputRef}
           />
         </label>
         <div className="text-center">
@@ -206,7 +186,7 @@ const Uploader2 = ({ videoTitle, onUploaded }) => {
           <Button
             style={{ paddingLeft: "40px", paddingRight: "40px" }}
             className="bg-blue-400 hover:bg-blue-500 rounded-full mt-2 px-10 min-w-max"
-            onClick={handleBrowseClick} // Trigger file input click
+            onClick={handleBrowseClick}
           >
             Browse
           </Button>
@@ -230,9 +210,6 @@ const Uploader2 = ({ videoTitle, onUploaded }) => {
           Upload
         </Button>
       )}
-
-      {/* Hidden video element for calculating duration */}
-      <video ref={videoRef} style={{ display: "none" }} />
     </div>
   );
 };

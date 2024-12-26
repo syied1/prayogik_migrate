@@ -64,10 +64,7 @@ export async function GET(
 }
 
 
-export async function PATCH(
-  req: Request,
-  { params }: { params: { courseId: string; lessonId: string } }
-) {
+export async function PATCH(req, { params }) {
   try {
     const { userId } = await getServerUserSession(req);
 
@@ -76,10 +73,10 @@ export async function PATCH(
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    // Parse the incoming request body to get the values (including videoUrl)
-    const { videoUrl, textContent, ...values } = await req.json();
+    // Parse the incoming request body
+    const { videoUrl, duration, ...values } = await req.json();
 
-    // Ensure videoUrl is valid if provided
+    // Validate video URL if provided
     if (videoUrl && typeof videoUrl !== "string") {
       return new NextResponse("Invalid video URL", { status: 400 });
     }
@@ -88,7 +85,7 @@ export async function PATCH(
     const ownCourse = await db.course.findUnique({
       where: {
         id: params.courseId,
-        teacherId: userId, // Check if the course is owned by the user
+        teacherId: userId, // Ensure the course is owned by the user
       },
     });
 
@@ -108,7 +105,7 @@ export async function PATCH(
       return new NextResponse("Lesson not found", { status: 404 });
     }
 
- 
+    // Update the lesson with new values
     const updatedLesson = await db.lesson.update({
       where: {
         id: params.lessonId,
@@ -116,7 +113,8 @@ export async function PATCH(
       },
       data: {
         ...values,
-        videoUrl: videoUrl ?? existingLesson.videoUrl,
+        videoUrl: videoUrl ?? existingLesson.videoUrl, // Use the existing value if videoUrl is not provided
+        duration: duration ?? existingLesson.duration, // Update duration
       },
     });
 
@@ -126,7 +124,6 @@ export async function PATCH(
     return new NextResponse("Internal Server Error", { status: 500 });
   }
 }
-
 
 // Delete
 export async function DELETE(

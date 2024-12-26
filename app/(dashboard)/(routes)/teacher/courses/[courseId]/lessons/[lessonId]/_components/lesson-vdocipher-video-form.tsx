@@ -1,3 +1,4 @@
+// @ts-nocheck
 "use client";
 
 import * as z from "zod";
@@ -17,8 +18,17 @@ interface LessonVideoFormProps {
   lessonId: string;
 }
 
+// Helper function to check if the URL is a YouTube or embedded video URL
+const isYouTubeUrl = (url: string) => {
+  const youtubeRegex = /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\//;
+  const vimeoRegex = /^(https?:\/\/)?(www\.)?(vimeo\.com)\//;
+
+  return youtubeRegex.test(url) || vimeoRegex.test(url);
+};
+
 const formSchema = z.object({
   videoUrl: z.string().min(1, "Video URL is required"),
+  duration: z.number().min(0, "Duration must be a positive number").optional(),
 });
 
 export default function VdocipherVideoForm({
@@ -31,27 +41,34 @@ export default function VdocipherVideoForm({
   const [videoStatus, setVideoStatus] = useState(initialData.videoStatus);
   const [isLoading, setIsLoading] = useState(false);
 
+  // Check if videoUrl is a YouTube URL and set it to null if so
+  const [videoUrl, setVideoUrl] = useState(() => {
+    return isYouTubeUrl(initialData.videoUrl) ? null : initialData.videoUrl;
+  });
+
   const toggleEdit = () => setIsEditing((current) => !current);
 
-  // Function to handle video URL update on upload
-  const handleVideoIdUpdate = async (videoId: string) => {
-    try {
-      // Create the payload with video URL as part of a values object
-      const values = { videoUrl: videoId };
+  // Function to handle video URL and duration update on upload
+  const handleVideoUpdate = async (videoId: string, duration: number) => {
+    console.log("videoId :", videoId, "duration :", duration);
 
-      // Validate the payload
+    try {
+      const values = {
+        videoUrl: videoId,
+        duration: duration,
+      };
+
       formSchema.parse(values);
 
-      // Send PATCH request with the values object
       await axios.patch(`/api/courses/${courseId}/lessons/${lessonId}`, values);
 
       toast.success("Lesson video updated successfully");
       router.refresh();
       toggleEdit();
     } catch (error) {
-      console.error("Error updating video URL:", error);
+      console.error("Error updating video URL or duration:", error);
       if (error instanceof z.ZodError) {
-        toast.error("Invalid video URL");
+        toast.error("Invalid video URL or duration");
       } else {
         toast.error("Something went wrong");
       }
@@ -62,7 +79,6 @@ export default function VdocipherVideoForm({
   const refreshVideoStatus = async () => {
     setIsLoading(true);
     try {
-      // Fetch the chapter data including the video status
       const { data } = await axios.get(
         `/api/courses/${courseId}/lessons/${lessonId}`
       );
@@ -74,17 +90,13 @@ export default function VdocipherVideoForm({
     }
   };
 
-  // useEffect to check video processing status at intervals
   useEffect(() => {
-    if (videoStatus !== "ready" && initialData.videoUrl) {
+    if (videoStatus !== "ready" && videoUrl) {
       const interval = setInterval(refreshVideoStatus, 10000); // Poll every 10 seconds
-
-      return () => clearInterval(interval); // Clear the interval on component unmount
+      return () => clearInterval(interval);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [videoStatus, initialData.videoUrl, courseId, lessonId]);
-
-  // console.log(videoFile, duration);
+  }, [videoStatus, videoUrl, courseId, lessonId]);
 
   return (
     <div className="mt-6 border bg-slate-100 rounded-md p-4">
@@ -92,13 +104,13 @@ export default function VdocipherVideoForm({
         Lesson video
         <Button onClick={toggleEdit} variant="ghost">
           {isEditing && <>Cancel</>}
-          {!isEditing && !initialData.videoUrl && (
+          {!isEditing && !videoUrl && (
             <>
               <PlusCircle className="h-4 w-4 mr-2" />
               Add a video
             </>
           )}
-          {!isEditing && initialData.videoUrl && (
+          {!isEditing && videoUrl && (
             <>
               <Pencil className="h-4 w-4 mr-2" />
               Edit video
@@ -108,7 +120,7 @@ export default function VdocipherVideoForm({
       </div>
 
       {!isEditing &&
-        (!initialData.videoUrl ? (
+        (!videoUrl ? (
           <div className="flex items-center justify-center h-60 bg-slate-200 rounded-md">
             <Video className="h-10 w-10 text-slate-500" />
           </div>
@@ -146,7 +158,7 @@ export default function VdocipherVideoForm({
         <div className="mt-2">
           <Uploader2
             videoTitle={initialData?.title || "Title of video"}
-            onUploaded={handleVideoIdUpdate}
+            onUploaded={handleVideoUpdate}
           />
           <div className="text-xs text-muted-foreground mt-4">
             Upload this chapter&apos;s video. Only{" "}
