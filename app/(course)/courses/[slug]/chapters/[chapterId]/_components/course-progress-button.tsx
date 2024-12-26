@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { useConfettiStore } from "@/hooks/use-confetti-store";
 import { getProgress } from "@/actions/get-progress";
 import { getServerUserSession } from "@/lib/getServerUserSession";
+import { log } from "console";
 
 interface Lesson {
   id: string;
@@ -40,12 +41,13 @@ export const CourseProgressButton = ({
   lessonId,
   courseId,
   nextLessonId,
-  isCompleted = false,
+  isCompleted,
   userId,
 }: CourseProgressButtonProps) => {
   const router = useRouter();
   const confetti = useConfettiStore();
   const [isLoading, setIsLoading] = useState(false);
+  const [lessonCompleted, setLessonCompleted] = useState(isCompleted);
 
   const onClick = async () => {
     try {
@@ -58,17 +60,30 @@ export const CourseProgressButton = ({
       }
 
       // Update the lesson progress in the database
-      await axios.put(`/api/courses/${courseId}/lessons/${lessonId}/progress`, {
-        isCompleted: !isCompleted,
-      });
+      const response = await axios.put(
+        `/api/courses/${courseId}/lessons/${lessonId}/progress`,
+        {
+          isCompleted: !lessonCompleted,
+        }
+      );
+
+      setLessonCompleted(response?.data?.isCompleted);
 
       // Trigger confetti if a lesson is completed
       // if (!isCompleted) {
       //   confetti.onOpen();
       // }
 
-      // Navigate to the next lesson if applicable
-      if (!isCompleted && nextLessonId && lessonSlug) {
+      response?.data?.isCompleted == false;
+
+      if (response?.data?.isCompleted == false) {
+        toast.success("Progress updated");
+        // router.refresh();
+        return;
+      }
+
+      if (response?.data?.isCompleted && nextLessonId && lessonSlug) {
+        // Navigate to the next lesson if applicable
         router.push(`/courses/${course.slug}/${lessonSlug}`);
       }
 
@@ -106,19 +121,21 @@ export const CourseProgressButton = ({
 
   return (
     <Button
-      onClick={isCompleted ? undefined : onClick} // Only set onClick if not completed
-      disabled={isLoading || isCompleted} // Disable if loading or already completed
+      onClick={onClick}
+      disabled={isLoading}
       type="button"
-      variant={isCompleted ? "outline" : "success"}
+      variant={lessonCompleted ? "outline" : "success"}
       className="w-full md:w-auto"
     >
       {isLoading ? (
-        <Loader className="h-4 w-4 animate-spin mr-2" />
+        <Loader className="h-4 w-4 animate-spin" />
       ) : (
         <>
-          {isCompleted ? "Completed" : "Mark as complete"}
+          {lessonCompleted ? "Mark as incomplete" : "Mark as complete"}
           <CheckCircle
-            className={`h-4 w-4 ml-2 ${isCompleted ? "text-teal-700" : ""}`}
+            className={`h-4 w-4 ml-2 ${
+              lessonCompleted ? "text-gray-400" : " text-white"
+            }`}
           />
         </>
       )}

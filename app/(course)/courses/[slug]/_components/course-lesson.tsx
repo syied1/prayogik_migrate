@@ -39,18 +39,11 @@ export default function CourseLesson({ course }) {
   return (
     <div className="my-6">
       <h1 className="text-2xl font-bold mb-4">Course Lessons</h1>
-      <Accordion type="single" collapsible className="border">
+      <div type="single" collapsible className="">
         {course.lessons.slice(0, visibleLessons).map((lesson, i) => (
-          <AccordionItem key={lesson.id} value={lesson.id}>
-            <div className="flex items-center justify-between bg-gray-100">
-              <AccordionTrigger className="px-4 font-bold text-sm text-left flex justify-start gap-4 hover:no-underline">
-                <ChevronDown className="h-4 w-4 shrink-0 transition-transform duration-200" />
-                <span className="capitalize">Lesson - {i + 1}</span>
-              </AccordionTrigger>
-              {/* <p className="text-gray-500 px-4 text-sm">duration</p> */}
-            </div>
-            <AccordionContent className="p-4">
-              <div className="flex items-start w-full gap-4">
+          <div key={lesson.id} value={lesson.id}>
+            <div className="p-4 bg-gray-100 mb-3 border">
+              <div className="flex items-start w-full">
                 {lesson.isFree ? (
                   <Dialog>
                     <DialogTrigger asChild>
@@ -127,10 +120,10 @@ export default function CourseLesson({ course }) {
                   <span></span>
                 )} */}
               </div>
-            </AccordionContent>
-          </AccordionItem>
+            </div>
+          </div>
         ))}
-      </Accordion>
+      </div>
 
       {/* Show More / Show Less Button */}
       {course.lessons.length > visibleLessonCount && (

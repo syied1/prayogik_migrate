@@ -1,13 +1,11 @@
 // @ts-nocheck
 
-"use client";
-
 import { BreadCrumb } from "@/components/common/breadCrumb";
 // import { CheckBadgeIcon } from "@heroicons/react/24/outline";
 import { BadgeCheckIcon, Star } from "lucide-react";
 import AverageRating from "./AverageRating";
 
-export default function Hero({ course }) {
+export default async function Hero({ course }) {
   const date = new Date(course.updatedAt);
   const formattedDate =
     (date.getMonth() + 1).toString().padStart(2, "0") +

@@ -146,7 +146,7 @@ export default async function CoursePage({ params }) {
           <div className="flex-1">
             <main className="min-h-screen">
               <NotificationHandler />
-              <WhatYouLearn course={course} />
+              {/* <WhatYouLearn course={course} /> */}
               <CourseDetails course={course} />
               <CourseLesson course={course} access={access} />
               <Requirements course={course} />

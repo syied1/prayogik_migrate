@@ -1,5 +1,4 @@
 // @ts-nocheck
-"use client";
 import StudentSidebar from "./student-sidebar";
 import VisitorSidebar from "./visitor-sidebar";
 
@@ -9,14 +8,14 @@ export default function Sidebar({
   lesson,
   videoUrl,
   onVideoUrlUpdate,
-  userId
+  userId,
 }) {
   // console.log("access", access);
   return (
     <div>
       {access ? (
         <StudentSidebar
-         courseSlug = {course?.slug}
+          courseSlug={course?.slug}
           lesson={lesson}
           videoUrl={videoUrl}
           onVideoUrlUpdate={onVideoUrlUpdate} // Prop for updating video URL

@@ -1,5 +1,5 @@
 // components/AverageRating.tsx
-
+"use client";
 import { useEffect, useState } from "react";
 
 interface AverageRatingProps {
@@ -78,8 +78,10 @@ const AverageRating: React.FC<AverageRatingProps> = ({ courseId }) => {
       </div>
       {/* Ratings count and enrolled students */}
       <span className="ml-2 ">
-        <span className="underline text-yellow-300">({ratingsCount ?? 0} ratings)</span> {enrolledStudents ?? 0}{" "}
-        students
+        <span className="underline text-yellow-300">
+          ({ratingsCount ?? 0} ratings)
+        </span>{" "}
+        {enrolledStudents ?? 0} students
       </span>
     </div>
   );

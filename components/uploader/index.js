@@ -1,3 +1,4 @@
+// @ts-nocheck
 "use client";
 import { Button } from "@/components/ui/button";
 import { UploadIcon } from "lucide-react";
@@ -15,9 +16,9 @@ const Uploader2 = ({ videoTitle, onUploaded }) => {
     title: "",
     description: "",
   });
-
-  // Ref to target the input field
-  const fileInputRef = useRef(null);
+  const [videoDuration, setVideoDuration] = useState(null);
+  const fileInputRef = useRef();
+  const videoRef = useRef();
 
   const removeFile = () => {
     setFile(null);
@@ -27,6 +28,7 @@ const Uploader2 = ({ videoTitle, onUploaded }) => {
       title: "",
       description: "",
     });
+    setVideoDuration(null); // Reset video duration
     // Reset the file input value so it can trigger another change event
     if (fileInputRef.current) {
       fileInputRef.current.value = ""; // Reset input value
@@ -45,20 +47,54 @@ const Uploader2 = ({ videoTitle, onUploaded }) => {
     setUploadProgress(progress);
   };
 
-  const handleFileChange = useCallback((event) => {
-    const selectedFile = event.target.files[0];
-    if (selectedFile) {
-      setFile(selectedFile);
-    }
-  }, []);
+  const handleFileChange = useCallback(
+    (event) => {
+      const selectedFile = event.target.files[0];
+      if (selectedFile) {
+        setFile(selectedFile);
 
-  const handleDrop = useCallback((event) => {
-    event.preventDefault();
-    const droppedFile = event.dataTransfer.files[0];
-    if (droppedFile) {
-      setFile(droppedFile);
-    }
-  }, []);
+        // Create an object URL and load the video metadata
+        const videoURL = URL.createObjectURL(selectedFile);
+        const videoElement = videoRef.current;
+
+        if (videoElement) {
+          videoElement.src = videoURL;
+
+          // Wait for the metadata to be loaded (this includes duration)
+          videoElement.onloadedmetadata = () => {
+            setVideoDuration(videoElement.duration); // Set the video duration in state
+            onUploaded(selectedFile, videoElement.duration); // Pass video file and duration to parent
+          };
+        }
+      }
+    },
+    [onUploaded]
+  );
+
+  const handleDrop = useCallback(
+    (event) => {
+      event.preventDefault();
+      const droppedFile = event.dataTransfer.files[0];
+      if (droppedFile) {
+        setFile(droppedFile);
+
+        // Create an object URL and load the video metadata
+        const videoURL = URL.createObjectURL(droppedFile);
+        const videoElement = videoRef.current;
+
+        if (videoElement) {
+          videoElement.src = videoURL;
+
+          // Wait for the metadata to be loaded (this includes duration)
+          videoElement.onloadedmetadata = () => {
+            setVideoDuration(videoElement.duration); // Set the video duration in state
+            onUploaded(droppedFile, videoElement.duration); // Pass video file and duration to parent
+          };
+        }
+      }
+    },
+    [onUploaded]
+  );
 
   const handleDragOver = useCallback((event) => {
     event.preventDefault();
@@ -92,9 +128,7 @@ const Uploader2 = ({ videoTitle, onUploaded }) => {
       return;
     }
 
-    onUploaded(data.videoId); // TODO
     setIsUploading(true);
-
     try {
       const result = await uploadFile(file, uploadCreds, handleUploadProgress);
 
@@ -134,7 +168,7 @@ const Uploader2 = ({ videoTitle, onUploaded }) => {
     }
   };
 
-  
+  console.log("videoDuration", videoDuration);
 
   return (
     <div>
@@ -196,6 +230,9 @@ const Uploader2 = ({ videoTitle, onUploaded }) => {
           Upload
         </Button>
       )}
+
+      {/* Hidden video element for calculating duration */}
+      <video ref={videoRef} style={{ display: "none" }} />
     </div>
   );
 };

@@ -4,7 +4,7 @@
 
 import { useEffect, useState } from "react";
 import { IconBadge } from "@/components/icon-badge";
-import { Video } from "lucide-react";
+import { Video, Upload, Link as ExternalLink, PlusCircle } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -48,28 +48,43 @@ const VideoInputSection: React.FC<VideoInputSectionProps> = ({
   return (
     <div>
       <div>
-        <div className="flex items-center gap-x-2">
-          <IconBadge icon={Video} />
-          <div className="font-medium flex items-center justify-between">
-            Lesson video
+        <div className="flex flex-row justify-between items-center w-full">
+          <div className="flex items-center gap-x-2">
+            <IconBadge icon={Video} />
+            <h2 className="text-xl">Customize your video</h2>
           </div>
-        </div>
 
-        <div className="w-full flex  justify-end">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button className="cursor-pointer">Add video</Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => handleSelection("upload")}>
-                Upload Video
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleSelection("url")}>
-                Add Video URL
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <div className="">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="cursor-pointer flex items-center"
+                >
+                  <PlusCircle className="mr-2 w-4 h-4" />
+                  Create
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="me-5">
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={() => handleSelection("upload")}
+                  className="cursor-pointer"
+                >
+                  <Upload className="mr-2 w-4 h-4" />
+                  Upload
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => handleSelection("url")}
+                  className="cursor-pointer"
+                >
+                  <ExternalLink className="mr-2 w-4 h-4" />
+                  External URL
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
 
         {/* Render forms based on dropdown selection */}

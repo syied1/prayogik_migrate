@@ -18,6 +18,9 @@ export async function PUT(
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
+    // Determine the new completion status
+    const newIsCompleted = isCompleted; 
+
     // Upsert user progress based on the userId and lessonId
     const userProgress = await db.userProgress.upsert({
       where: {
@@ -27,12 +30,12 @@ export async function PUT(
         },
       },
       update: {
-        isCompleted,
+        isCompleted: newIsCompleted, // Update to the new status
       },
       create: {
         userId,
         lessonId: params.lessonId,
-        isCompleted,
+        isCompleted: newIsCompleted, // Create with the new status
       },
     });
 

@@ -1,5 +1,3 @@
-"use client";
-
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import SingleCoursePrice from "./single-course-price";
@@ -32,11 +30,11 @@ export default function VisitorSidebar({ course, access, userId }: any) {
               />
               {/* Course Image */}
               <Image
-                alt={course.imageUrl}
+                alt={course?.imageUrl}
                 className="object-cover h-[250px]"
                 height={100}
                 width={400}
-                src={course.imageUrl}
+                src={course?.imageUrl}
                 priority
               />
             </div>
@@ -44,11 +42,11 @@ export default function VisitorSidebar({ course, access, userId }: any) {
             <div className="relative w-full aspect-video">
               {/* Course Image Only */}
               <Image
-                alt={course.imageUrl}
+                alt={course?.imageUrl}
                 className="object-cover h-[250px]"
                 height={100}
                 width={400}
-                src={course.imageUrl}
+                src={course?.imageUrl}
                 priority
               />
             </div>

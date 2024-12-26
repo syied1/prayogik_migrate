@@ -55,7 +55,7 @@ export default function VideoPopUp({
     : null;
 
   return (
-    <DialogContent className={previewVideoUrl ? "max-w-2xl" : "max-w-max"}>
+    <DialogContent className={previewVideoUrl ? "max-w-[1000px]" : "max-w-max"}>
       <DialogHeader>
         <DialogTitle>
           <div className="flex flex-col">

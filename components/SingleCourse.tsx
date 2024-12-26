@@ -9,6 +9,7 @@ import { CourseProgress } from "./course-progress";
 import { Preview } from "./preview";
 import { useSession } from "next-auth/react";
 import CheckoutButton from "./checkoutButton/checkoutButton";
+import { useEffect, useState } from "react";
 
 export default function SingleCourse({ course }) {
   const { data: session, status } = useSession();
@@ -32,9 +33,35 @@ export default function SingleCourse({ course }) {
   const isPurchased = purchases && purchases.length > 0;
   const isAuthenticated = !!session;
 
-  const decodedSlug = lessons[0]?.slug
-    ? decodeURIComponent(lessons[0].slug)
-    : "";
+  const [nextLessonSlug, setNextLessonSlug] = useState(null);
+
+  console.log("lessons", lessons);
+
+  useEffect(() => {
+    const fetchUserProgress = async () => {
+      if (session) {
+        const response = await fetch(
+          `/api/user/userprogress?userId=${session.user.id}&courseId=${course.id}`
+        );
+        const userProgress = await response.json();
+
+        // Check for the completed lessons and find the next lesson
+        const completedLessonIds = userProgress.map(
+          (progress) => progress.lessonId
+        );
+        const nextLesson = lessons.find(
+          (lesson) =>
+            lesson.isPublished && !completedLessonIds.includes(lesson.id)
+        );
+
+        if (nextLesson) {
+          setNextLessonSlug(nextLesson.slug);
+        }
+      }
+    };
+
+    fetchUserProgress();
+  }, [session, course.id, course.lessons]);
 
   return (
     <div className="bg-white rounded-lg shadow-lg overflow-hidden flex flex-col">
@@ -53,7 +80,7 @@ export default function SingleCourse({ course }) {
           //  href={`/courses/${slug}`} // Allow unauthenticated users to view the course details
           href={
             status === "authenticated" && session?.user?.id && progress !== null
-              ? `/courses/${slug}/${decodedSlug}`
+              ? `/courses/${slug}/${lessons[0]?.slug}`
               : `/courses/${slug}`
           } // Allow unauthenticated users to view the course details
           className="absolute inset-0 flex items-center justify-center mt-4"
@@ -88,7 +115,7 @@ export default function SingleCourse({ course }) {
               status === "authenticated" &&
               session?.user?.id &&
               progress !== null
-                ? `/courses/${slug}/${decodedSlug}`
+                ? `/courses/${slug}/${lessons[0]?.slug}`
                 : `/courses/${slug}`
             }
             className="text-xl font-bold"
@@ -120,17 +147,33 @@ export default function SingleCourse({ course }) {
                 value={progress}
               />
             </div>
-            <Link href={`/courses/${slug}/${decodedSlug}`} className="mt-4">
-              <Button className="w-full h-12 text-lg bg-teal-500 text-white font-bold py-2 rounded flex items-center justify-center hover:bg-teal-500 hover:opacity-80">
-                চালিয়ে যান
-              </Button>
-            </Link>
+            {nextLessonSlug ? (
+              <Link href={`/courses/${slug}/${nextLessonSlug}`}>
+                <Button className="w-full h-12 text-lg bg-teal-500 text-white font-bold py-2 rounded flex items-center justify-center hover:bg-teal-600">
+                  চালিয়ে যান
+                </Button>
+              </Link>
+            ) : (
+              <div>
+                <Link
+                  href={`/courses/${slug}/${lessons[0]?.slug}`}
+                  className="mt-4"
+                >
+                  <Button className="w-full h-12 text-lg bg-teal-500 text-white font-bold py-2 rounded flex items-center justify-center hover:bg-teal-500 hover:opacity-80">
+                    চালিয়ে যান
+                  </Button>
+                </Link>
+              </div>
+            )}
           </>
         ) : (
           <div>
             <div className="flex items-center text-gray-500 mt-2 mb-4"></div>
             <Link href={`/courses/${slug}`}>
-              <Button className="w-full h-12 bg-teal-500 text-white font-bold py-2 rounded flex items-center justify-center hover:bg-teal-500 hover:opacity-80">
+              <Button
+                type="button"
+                className="w-full h-12 bg-teal-500 text-white font-bold py-2 rounded flex items-center justify-center hover:bg-teal-500 hover:opacity-80"
+              >
                 <span className=" ml-2 text-lg">বিস্তারিত দেখুন</span>
               </Button>
             </Link>
